@@ -1,2 +1,4 @@
 export const displayReporter = (report) =>
-  report.pelaporNama ?? 'Pelapor (identitas disembunyikan)'
+  report.tampilkanIdentitas && report.pelaporNama
+    ? report.pelaporNama
+    : 'Pelapor (identitas disembunyikan)'
