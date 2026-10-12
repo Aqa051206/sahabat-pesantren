@@ -103,8 +103,8 @@ export default function SantriReportDetailPage() {
           label="Tampilkan namaku ke petugas"
           description={
             report.tampilkanIdentitas
-              ? 'Petugas melihat namamu untuk membantumu.'
-              : 'Pengurus dan pimpinan tidak akan melihat namamu.'
+              ? 'Pengurus dan pimpinan dapat melihat namamu sesuai pilihanmu.'
+              : 'Pengurus dan pimpinan tidak dapat melihat namamu selama pilihan ini mati.'
           }
           checked={report.tampilkanIdentitas}
           disabled={updateIdentity.isPending}

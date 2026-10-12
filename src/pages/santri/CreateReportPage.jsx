@@ -134,6 +134,24 @@ export default function CreateReportPage() {
         </p>
       </header>
 
+      <Card className="mb-6 border-l-4 border-primary p-5 sm:p-6">
+        <div className="flex items-start gap-3">
+          <LifeBuoy aria-hidden="true" className="mt-0.5 size-6 shrink-0 text-primary" />
+          <div>
+            <h2 className="font-bold text-navy">Butuh bantuan segera?</h2>
+            <p className="mt-1 text-sm leading-6 text-body">
+              Jika kamu sedang dalam bahaya, segera hubungi pengurus atau ustaz
+              terdekat. Kamu juga dapat menghubungi SAPA 129 melalui{' '}
+              <a href="tel:129" className="font-semibold text-primary underline underline-offset-2">
+                telepon 129
+              </a>
+              . Untuk membuat laporan di sini, pilih kategori, ceritakan
+              kejadian, lalu kirim.
+            </p>
+          </div>
+        </div>
+      </Card>
+
       <form
         onSubmit={handleSubmit(onSubmit)}
         className="flex flex-col gap-6"
@@ -266,7 +284,7 @@ export default function CreateReportPage() {
           <Switch
             id="tampilkan_identitas"
             label="Tampilkan namaku ke petugas"
-            description="Jika dimatikan, pengurus dan pimpinan tidak akan melihat namamu."
+            description="Nama hanya dapat dilihat pengurus dan pimpinan jika kamu mengaktifkan pilihan ini."
             checked={tampilkanIdentitas}
             onChange={(next) =>
               setValue('tampilkan_identitas', next, { shouldDirty: true })

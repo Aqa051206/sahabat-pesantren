@@ -126,7 +126,7 @@ export default function StaffReportListPage() {
               <li key={report.kode}>
                 <Link
                   to={`/petugas/laporan/${report.kode}`}
-                  className="block rounded-3xl border border-border/70 bg-band-1 p-5 transition-colors hover:border-primary/60"
+                  className="block rounded-2xl border border-line bg-white p-5 shadow-[0_8px_30px_rgba(28,42,90,0.06)] transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-[0_12px_34px_rgba(28,42,90,0.1)]"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="font-sans text-xl font-semibold text-primary">
