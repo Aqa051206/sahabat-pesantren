@@ -65,9 +65,12 @@ export function SantriLayout() {
     <div className="flex min-h-svh flex-col bg-band-1">
       <DemoBanner />
       <div className="flex flex-1">
-        <aside className="sticky top-0 hidden h-svh w-64 shrink-0 flex-col border-r border-line bg-white px-5 py-6 lg:flex">
+        <aside className="sticky top-0 hidden h-svh w-72 shrink-0 flex-col border-r border-line bg-white px-6 py-7 lg:flex">
           <Brand />
-          <nav aria-label="Navigasi santri" className="mt-10 flex flex-col gap-2">
+          <p className="mt-10 px-3 text-xs font-bold uppercase tracking-[0.14em] text-body">
+            Menu utama
+          </p>
+          <nav aria-label="Navigasi santri" className="mt-3 flex flex-col gap-2">
             {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
               <NavLink
                 key={to}
@@ -76,7 +79,7 @@ export function SantriLayout() {
                   cn(
                     'flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition-colors',
                     isActive
-                      ? 'bg-primary text-white shadow-[0_10px_24px_-8px_rgba(18,198,214,0.65)]'
+                      ? 'bg-primary text-white shadow-[0_8px_20px_rgba(18,55,42,0.18)]'
                       : 'text-primary hover:bg-band-1',
                   )
                 }
@@ -86,18 +89,21 @@ export function SantriLayout() {
               </NavLink>
             ))}
           </nav>
-          <p className="mt-auto text-xs leading-5 text-body">
-            Gunakan Keluar Cepat saat meninggalkan komputer pojok curhat.
-          </p>
+          <div className="mt-auto rounded-2xl bg-mint-50 p-4">
+            <p className="text-sm font-bold text-navy">Privasi tetap terjaga</p>
+            <p className="mt-1 text-xs leading-5 text-body">
+              Gunakan Keluar Cepat saat meninggalkan komputer pojok curhat.
+            </p>
+          </div>
         </aside>
 
         <div className="flex min-w-0 flex-1 flex-col">
           <header className="sticky top-0 z-20 border-b border-line bg-white/95 shadow-[0_3px_18px_rgba(28,42,90,0.04)] backdrop-blur">
-            <div className="flex min-h-[72px] items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
+            <div className="flex min-h-[76px] items-center justify-between gap-4 px-5 sm:px-7 lg:px-10 xl:px-12 2xl:px-16">
               <div className="lg:hidden">
                 <Brand showText={false} />
               </div>
-              <span className="hidden text-sm text-body sm:inline">
+              <span className="min-w-0 flex-1 truncate text-sm text-body sm:flex-none">
                 Halo, <strong className="text-navy">{user?.name}</strong>
               </span>
               <div className="ml-auto flex flex-col items-end">
@@ -109,7 +115,7 @@ export function SantriLayout() {
             </div>
           </header>
 
-          <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 pb-24 sm:px-6 lg:px-8 lg:py-8">
+          <main className="w-full flex-1 px-5 py-7 pb-24 sm:px-7 lg:px-10 lg:py-9 xl:px-12 2xl:px-16">
             <Outlet />
           </main>
         </div>

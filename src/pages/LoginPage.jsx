@@ -75,16 +75,19 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-svh flex-col bg-gradient-to-br from-mint-50 via-white to-sky-50">
+    <div className="relative flex min-h-svh flex-col overflow-hidden bg-sky-50">
       <DemoBanner />
+      <div aria-hidden="true" className="pointer-events-none absolute -left-24 top-20 size-72 rounded-full bg-mint-50" />
+      <div aria-hidden="true" className="pointer-events-none absolute -right-24 bottom-10 size-80 rounded-full bg-amber/30" />
       <div className="grid flex-1 place-items-center px-4 py-10">
-        <div className="w-full max-w-md">
+        <div className="relative z-10 w-full max-w-md">
           <div className="mb-6 flex flex-col items-center gap-2 text-center">
-            <Brand />
+            <Brand className="rounded-2xl bg-mint-50 px-5 py-3" />
+            <p className="text-sm font-semibold text-body">Ruang aman untuk mulai bercerita</p>
           </div>
 
-          <Card className="p-6 sm:p-8">
-            <h1 className="text-2xl">Masuk</h1>
+          <Card className="border border-line bg-white/95 p-6 shadow-[0_18px_55px_rgba(18,55,42,0.10)] sm:p-8">
+            <h1 className="text-3xl">Masuk</h1>
             <p className="mt-1 text-sm text-body">
               Gunakan NIS (santri) atau ID petugas yang diberikan pengurus.
             </p>

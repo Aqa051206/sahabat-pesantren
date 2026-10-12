@@ -7,11 +7,11 @@ function Brand({ className, tone = 'dark', showText = true }) {
         role="presentation"
         aria-hidden="true"
         viewBox="0 0 40 40"
-        className="size-10 shrink-0"
+        className="size-11 shrink-0"
       >
-        <path d="M5 34V19C5 10.7 11.7 4 20 4s15 6.7 15 15v15" fill="none" stroke="var(--color-primary)" strokeWidth="4" strokeLinecap="round" />
-        <path d="M20 13 29 17v6c0 6-4 10-9 13-5-3-9-7-9-13v-6l9-4Z" fill="var(--color-cyan-400)" />
-        <path d="m16 22 3 3 6-7" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+        <rect x="4" y="3" width="32" height="34" rx="13" fill="var(--color-primary)" />
+        <path d="M10 15.5c0-4 3-7 7-7h7c4 0 7 3 7 7v6c0 4-3 7-7 7h-5l-6 4v-7c-2-1-3-4-3-7v-3Z" fill="white" />
+        <path d="M20.5 24.5 16 20.7c-3.4-3 1-7.3 4.5-3.6 3.5-3.7 7.9.6 4.5 3.6l-4.5 3.8Z" fill="var(--color-salmon)" />
       </svg>
       {showText ? (
         <span className={cn('text-base font-extrabold leading-tight tracking-tight sm:text-lg', tone === 'light' ? 'text-white' : 'text-navy')}>
