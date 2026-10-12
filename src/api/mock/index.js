@@ -350,11 +350,11 @@ export const dashboard = {
     await delay()
     const user = requireUser()
     requireRole(user, ['pimpinan'])
-    const total = reportStore.length
     return adaptSummary({
-      total,
-      per_status: countBy(reportStore, 'status'),
-      per_kategori: countBy(reportStore, 'kategori'),
+      total_santri: accounts.filter((account) => account.role === 'santri').length,
+      total_laporan: reportStore.length,
+      laporan_per_status: countBy(reportStore, 'status'),
+      laporan_per_kategori: countBy(reportStore, 'kategori'),
     })
   },
 }

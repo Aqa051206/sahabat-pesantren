@@ -151,7 +151,7 @@ export default function HomePage() {
 
   return (
     <div className="overflow-hidden">
-      <section className="relative bg-gradient-to-br from-mint-50 via-white to-sky-50">
+      <section className="relative bg-primary">
         <div className="pointer-events-none absolute -left-32 top-10 size-96 rounded-full bg-cyan-400/10 blur-3xl" />
         <div className="mx-auto grid min-h-[640px] w-full max-w-[1600px] items-center gap-8 px-5 py-16 sm:px-10 lg:grid-cols-[1.05fr_0.95fr] lg:px-16 xl:px-24">
           <div className="relative z-10 max-w-3xl">

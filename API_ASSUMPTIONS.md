@@ -79,9 +79,9 @@ hanya menggunakannya bila API memang mengirimkannya:
 
 - ✅ `GET /api/v1/dashboard/summary`
 
-⚠️ Asumsi respons `{ data: { total, per_status, per_kategori } }`. Bila backend
-memakai nama field lain, sesuaikan
-`adaptSummary` di `src/api/adapters.js`.
+✅ Respons ringkasan `{ data: { total_santri, total_laporan,
+laporan_per_status: { baru, diproses, selesai }, laporan_per_kategori } }`.
+Frontend memetakan field ini melalui `adaptSummary` di `src/api/adapters.js`.
 
 ## Impor santri (Excel/CSV)
 

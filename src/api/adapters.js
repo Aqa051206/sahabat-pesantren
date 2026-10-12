@@ -65,7 +65,8 @@ export const adaptPagination = (meta) => ({
 })
 
 export const adaptSummary = (raw) => ({
-  total: raw?.total ?? 0,
-  perStatus: raw?.per_status ?? {},
-  perKategori: raw?.per_kategori ?? {},
+  totalSantri: raw?.total_santri ?? 0,
+  totalLaporan: raw?.total_laporan ?? 0,
+  perStatus: raw?.laporan_per_status ?? {},
+  perKategori: raw?.laporan_per_kategori ?? {},
 })

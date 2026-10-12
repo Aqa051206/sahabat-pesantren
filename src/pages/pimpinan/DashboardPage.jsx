@@ -2,6 +2,7 @@ import {
   BarChart3,
   ClipboardList,
   TrendingUp,
+  UsersRound,
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import Card from '../../components/ui/Card'
@@ -113,11 +114,17 @@ export default function DashboardPage() {
         </p>
       </header>
 
-      <div className="grid gap-4">
+      <div className="grid gap-4 sm:grid-cols-2">
+        <StatCard
+          icon={UsersRound}
+          label="Total santri"
+          value={data.totalSantri}
+          hint="Seluruh santri yang terdaftar."
+        />
         <StatCard
           icon={ClipboardList}
           label="Total laporan"
-          value={data.total}
+          value={data.totalLaporan}
           hint="Seluruh laporan yang tercatat."
         />
       </div>
