@@ -7,9 +7,18 @@ export const login = async ({ identifier, password }) => {
     { identifier, password },
     { skipSessionExpiry: true },
   )
+  const result = data?.data ?? data
+  const token = result?.access_token ?? result?.token
+  const user = adaptUser(result?.user)
+
+  if (typeof token !== 'string' || !token || !user) {
+    throw new Error('Respons login dari server tidak valid.')
+  }
+
   return {
-    token: data.data.token,
-    user: adaptUser(data.data.user),
+    token,
+    user,
+    message: result.message ?? data.message,
   }
 }
 

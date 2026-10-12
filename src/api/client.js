@@ -3,7 +3,7 @@ import { API_URL } from '../lib/env'
 import { toApiError } from './errors'
 import { clearSession, emitSessionExpired, getToken } from '../lib/session'
 
-const baseURL = `${API_URL}/api/v1`
+const baseURL = `${API_URL}/api`
 
 export const http = axios.create({
   baseURL,

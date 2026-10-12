@@ -14,7 +14,10 @@ disebutkan tetap merupakan asumsi sampai dikonfirmasi tim backend.
 - ✅ `POST /api/v1/auth/login`
 - ✅ `POST /api/v1/auth/password`
 - ✅ `POST /api/v1/logout`
-- ⚠️ Asumsi request login `{ identifier, password }`; respons `{ data: { token, user } }`.
+- ⚠️ Request login yang digunakan frontend `{ identifier, password }`.
+  Respons mendukung `{ data: { token, user } }` dan objek langsung
+  `{ access_token, user, message }`; field pengguna `must_change_password`
+  dipetakan ke `mustChangePassword`.
 - ⚠️ Asumsi request ganti kata sandi `{ current_password, new_password }`; respons `{ data: { ok } }`.
 - ⚠️ Asumsi bentuk `user`: `{ id, name, role, must_change_password }`, dengan
   `role ∈ { santri, pengurus, pimpinan }`.
