@@ -3,10 +3,10 @@ import { adaptMessage } from '../adapters'
 
 const unwrap = (response) => response.data.data
 
-export const getMessages = async (kode) => {
-  const { data } = await http.get(`/reports/${kode}/messages`)
+export const getMessages = async (id) => {
+  const { data } = await http.get(`/reports/${id}/messages`)
   return (data.data ?? []).map(adaptMessage)
 }
 
-export const sendMessage = async (kode, body) =>
-  adaptMessage(unwrap(await http.post(`/reports/${kode}/messages`, { body })))
+export const sendMessage = async (id, body) =>
+  adaptMessage(unwrap(await http.post(`/reports/${id}/messages`, { body })))

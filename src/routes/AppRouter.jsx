@@ -55,7 +55,7 @@ export default function AppRouter() {
           <Route index element={<Navigate to="buat-laporan" replace />} />
           <Route path="buat-laporan" element={<CreateReportPage />} />
           <Route path="laporan-saya" element={<MyReportsPage />} />
-          <Route path="laporan/:kode" element={<SantriReportDetailPage />} />
+          <Route path="laporan/:id" element={<SantriReportDetailPage />} />
         </Route>
 
         <Route
@@ -67,7 +67,7 @@ export default function AppRouter() {
           }
         >
           <Route index element={<StaffReportListPage />} />
-          <Route path="laporan/:kode" element={<StaffReportDetailPage />} />
+          <Route path="laporan/:id" element={<StaffReportDetailPage />} />
         </Route>
 
         <Route

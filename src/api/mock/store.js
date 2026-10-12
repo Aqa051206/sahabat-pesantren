@@ -90,11 +90,10 @@ const note = (authorName, body, daysAgo) => ({
 
 export const reports = [
   {
-    kode: 'SP-2026-0001',
+    id: 1,
     noLaporan: 1,
     ownerId: 1,
     kategori: 'perundungan',
-    urgensi: 'perlu_perhatian',
     isi: 'Saya sering diejek soal asal daerah saya di kamar asrama saat waktu bebas.',
     tampilkanIdentitas: false,
     status: 'baru',
@@ -107,11 +106,10 @@ export const reports = [
     notes: [],
   },
   {
-    kode: 'SP-2026-0002',
+    id: 2,
     noLaporan: 2,
     ownerId: 1,
     kategori: 'kekerasan_fisik',
-    urgensi: 'darurat',
     isi: 'Ada teman yang mendorong saya sampai terjatuh di lapangan saat olahraga.',
     tampilkanIdentitas: true,
     status: 'diproses',
@@ -133,11 +131,10 @@ export const reports = [
     ],
   },
   {
-    kode: 'SP-2026-0003',
+    id: 3,
     noLaporan: 3,
     ownerId: 2,
     kategori: 'kekerasan_verbal',
-    urgensi: 'biasa',
     isi: 'Ada yang membentak saya di depan teman-teman saat kegiatan malam.',
     tampilkanIdentitas: false,
     status: 'selesai',
@@ -150,11 +147,10 @@ export const reports = [
     notes: [],
   },
   {
-    kode: 'SP-2026-0004',
+    id: 4,
     noLaporan: 4,
     ownerId: 100,
     kategori: 'masalah_pengurus',
-    urgensi: 'perlu_perhatian',
     isi: 'Saya merasa ada perlakuan yang tidak adil saat pembagian tugas kebersihan.',
     tampilkanIdentitas: false,
     status: 'diproses',
@@ -167,11 +163,10 @@ export const reports = [
     notes: [note('Ust. Rizal', 'Menunggu arahan pimpinan.', -1)],
   },
   {
-    kode: 'SP-2026-0005',
+    id: 5,
     noLaporan: 5,
     ownerId: 1,
     kategori: 'masalah_pribadi',
-    urgensi: 'biasa',
     isi: 'Belakangan saya sulit tidur dan sering merasa cemas tanpa alasan jelas.',
     tampilkanIdentitas: false,
     status: 'baru',
@@ -184,11 +179,10 @@ export const reports = [
     notes: [],
   },
   {
-    kode: 'SP-2026-0006',
+    id: 6,
     noLaporan: 6,
     ownerId: 2,
     kategori: 'perundungan',
-    urgensi: 'biasa',
     isi: 'Saya dikucilkan dari kelompok belajar dan tidak ada yang mau duduk dekat saya.',
     tampilkanIdentitas: false,
     status: 'diproses',
@@ -204,11 +198,10 @@ export const reports = [
     notes: [],
   },
   {
-    kode: 'SP-2026-0007',
+    id: 7,
     noLaporan: 7,
     ownerId: 101,
     kategori: 'kekerasan_verbal',
-    urgensi: 'perlu_perhatian',
     isi: 'Ada yang mengatai saya dengan sebutan yang menyakitkan berulang kali.',
     tampilkanIdentitas: true,
     status: 'selesai',
@@ -221,11 +214,10 @@ export const reports = [
     notes: [],
   },
   {
-    kode: 'SP-2026-0008',
+    id: 8,
     noLaporan: 8,
     ownerId: 1,
     kategori: 'lainnya',
-    urgensi: 'biasa',
     isi: 'Saya ingin bertanya soal prosedur izin pulang, tidak tahu harus ke siapa.',
     tampilkanIdentitas: false,
     status: 'selesai',
@@ -238,11 +230,10 @@ export const reports = [
     notes: [],
   },
   {
-    kode: 'SP-2026-0009',
+    id: 9,
     noLaporan: 9,
     ownerId: 2,
     kategori: 'masalah_pengurus',
-    urgensi: 'biasa',
     isi: 'Ada pengurus yang menurut saya terlalu keras saat menegur kami.',
     tampilkanIdentitas: false,
     status: 'baru',
@@ -255,11 +246,10 @@ export const reports = [
     notes: [],
   },
   {
-    kode: 'SP-2026-0010',
+    id: 10,
     noLaporan: 10,
     ownerId: 100,
     kategori: 'kekerasan_fisik',
-    urgensi: 'perlu_perhatian',
     isi: 'Saya pernah ditendang saat latihan, tapi saya takut memberi tahu nama pelakunya.',
     tampilkanIdentitas: false,
     status: 'diproses',
@@ -276,11 +266,10 @@ export const reports = [
     notes: [],
   },
   {
-    kode: 'SP-2026-0011',
+    id: 11,
     noLaporan: 11,
     ownerId: 102,
     kategori: 'perundungan',
-    urgensi: 'biasa',
     isi: 'Ada yang mengambil barang saya tanpa izin dan tidak mengembalikannya.',
     tampilkanIdentitas: false,
     status: 'selesai',
@@ -293,11 +282,10 @@ export const reports = [
     notes: [],
   },
   {
-    kode: 'SP-2026-0012',
+    id: 12,
     noLaporan: 12,
     ownerId: 1,
     kategori: 'masalah_pribadi',
-    urgensi: 'perlu_perhatian',
     isi: 'Saya sedang rindu rumah dan sulit fokus belajar belakangan ini.',
     tampilkanIdentitas: false,
     status: 'baru',
@@ -313,12 +301,9 @@ export const reports = [
 
 let reportSequence = reports.length
 
-export const nextReportKode = () => {
+export const nextReportId = () => {
   reportSequence += 1
-  return {
-    kode: `SP-2026-${String(reportSequence).padStart(4, '0')}`,
-    noLaporan: reportSequence,
-  }
+  return { id: reportSequence, noLaporan: reportSequence }
 }
 
 export const nextMessageId = () => (messageId += 1)

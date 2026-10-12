@@ -20,7 +20,6 @@ import { Conversation } from '../../features/conversations/Conversation'
 import {
   CategoryBadge,
   StatusBadge,
-  UrgencyBadge,
 } from '../../features/reports/components/badges'
 import {
   useAddNote,
@@ -31,7 +30,6 @@ import {
 import {
   ESCALATION_TARGETS,
   ESCALATION_TARGET_LABELS,
-  REPORT_RECIPIENTS,
   STATUSES,
 } from '../../lib/constants'
 import { displayReporter } from '../../lib/displayReporter'
@@ -49,11 +47,11 @@ function InfoRow({ label, children }) {
 }
 
 export default function StaffReportDetailPage() {
-  const { kode } = useParams()
-  const { data: report, isLoading, isError, error, refetch } = useReport(kode)
-  const updateStatus = useUpdateStatus(kode)
-  const escalate = useEscalate(kode)
-  const addNote = useAddNote(kode)
+  const { id } = useParams()
+  const { data: report, isLoading, isError, error, refetch } = useReport(id)
+  const updateStatus = useUpdateStatus(id)
+  const escalate = useEscalate(id)
+  const addNote = useAddNote(id)
   const toast = useToast()
 
   const [escalateOpen, setEscalateOpen] = useState(false)
@@ -157,26 +155,19 @@ export default function StaffReportDetailPage() {
       <Card className="p-5 sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <span className="font-sans text-2xl font-semibold text-primary">
-            {report.kode}
+            {report.noLaporan}
           </span>
           <StatusBadge status={report.status} />
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
           <CategoryBadge kategori={report.kategori} />
-          <UrgencyBadge urgensi={report.urgensi} />
         </div>
 
         <dl className="mt-5 grid gap-4 sm:grid-cols-2">
           <InfoRow label="Pelapor">
             {displayReporter(report)}
           </InfoRow>
-          <InfoRow label="Diteruskan ke">
-            {REPORT_RECIPIENTS[report.penerima] ?? report.penerima}
-          </InfoRow>
           <InfoRow label="Tanggal laporan">{formatDateOnly(report.createdAt)}</InfoRow>
-          <InfoRow label="Batas klarifikasi">
-            {formatDateOnly(report.batasKlarifikasi)}
-          </InfoRow>
         </dl>
 
         <p className="mt-5 rounded-2xl bg-white p-4" data-pre-wrap>
@@ -232,7 +223,7 @@ export default function StaffReportDetailPage() {
         </div>
       </Card>
 
-      <Conversation kode={kode} viewer="petugas" />
+      <Conversation id={id} viewer="petugas" />
 
       <Card className="p-5 sm:p-6">
         <h2 className="flex items-center gap-2 text-xl">

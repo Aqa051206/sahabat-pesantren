@@ -8,14 +8,13 @@ import {
   adaptSummary,
   adaptUser,
 } from '../adapters'
-import { isPastDate } from '../../lib/formatDate'
 import { routesToPimpinan } from '../../lib/constants'
 import { clearSession, emitSessionExpired, getToken } from '../../lib/session'
 import {
   accounts,
   nextMessageId,
   nextNoteId,
-  nextReportKode,
+  nextReportId,
   offsetDate,
   personName,
   reports as reportStore,
@@ -48,7 +47,8 @@ const requireRole = (user, roles) => {
   }
 }
 
-const findReport = (kode) => reportStore.find((item) => item.kode === kode)
+const findReport = (id) =>
+  reportStore.find((item) => String(item.id) === String(id))
 
 const canView = (user, report) => {
   if (user.role === 'santri') return report.ownerId === user.id
@@ -56,8 +56,8 @@ const canView = (user, report) => {
   return true
 }
 
-const accessibleReport = (user, kode) => {
-  const report = findReport(kode)
+const accessibleReport = (user, id) => {
+  const report = findReport(id)
   if (!report) fail(404, 'Laporan tidak ditemukan.')
   if (!canView(user, report)) {
     fail(403, 'Kamu tidak punya akses ke laporan ini.')
@@ -68,10 +68,10 @@ const accessibleReport = (user, kode) => {
 const toRawReport = (report, viewer) => {
   const isStaff = viewer.role !== 'santri'
   return {
-    kode: report.kode,
+    id: report.id,
+    users_id: report.ownerId,
     no_laporan: report.noLaporan,
     kategori: report.kategori,
-    urgensi: report.urgensi,
     isi: report.isi,
     tampilkan_identitas: report.tampilkanIdentitas,
     status: report.status,
@@ -80,7 +80,7 @@ const toRawReport = (report, viewer) => {
     dieskalasi_tujuan: report.escalated?.tujuan ?? null,
     dieskalasi_catatan: report.escalated?.catatan ?? null,
     dieskalasi_at: report.escalated?.at ?? null,
-    created_at: report.createdAt,
+    waktu: report.createdAt,
     pelapor_nama: report.tampilkanIdentitas ? personName(report.ownerId) : null,
     perlu_klarifikasi: report.perluKlarifikasi,
     catatan_internal: isStaff
@@ -192,7 +192,6 @@ export const reports = {
     const isi = String(payload.isi ?? '').trim()
     const errors = {}
     if (!payload.kategori) errors.kategori = ['Pilih salah satu kategori.']
-    if (!payload.urgensi) errors.urgensi = ['Pilih tingkat urgensi.']
     if (isi.length < 20) {
       errors.isi = ['Ceritakan sedikit lebih lengkap, minimal 20 karakter.']
     } else if (isi.length > 2000) {
@@ -202,20 +201,16 @@ export const reports = {
       fail(422, 'Periksa kembali isianmu.', errors)
     }
 
-    const { kode, noLaporan } = nextReportKode()
-    const penerima = routesToPimpinan({
-      kategori: payload.kategori,
-      urgensi: payload.urgensi,
-    })
+    const { id, noLaporan } = nextReportId()
+    const penerima = routesToPimpinan({ kategori: payload.kategori })
       ? 'pimpinan'
       : 'pengurus'
 
     const report = {
-      kode,
+      id,
       noLaporan,
       ownerId: user.id,
       kategori: payload.kategori,
-      urgensi: payload.urgensi,
       isi,
       tampilkanIdentitas: Boolean(payload.tampilkan_identitas),
       status: 'baru',
@@ -240,30 +235,29 @@ export const reports = {
     return toList(mine, page)
   },
 
-  async getList({ page = 1, status, kategori, urgensi } = {}) {
+  async getList({ page = 1, status, kategori } = {}) {
     await delay()
     const user = requireUser()
     requireRole(user, ['pengurus', 'pimpinan'])
     let visible = reportStore.filter((item) => canView(user, item))
     if (status) visible = visible.filter((item) => item.status === status)
     if (kategori) visible = visible.filter((item) => item.kategori === kategori)
-    if (urgensi) visible = visible.filter((item) => item.urgensi === urgensi)
     return toList(
       visible.map((item) => toRawReport(item, user)),
       page,
     )
   },
 
-  async getDetail(kode) {
+  async getDetail(id) {
     await delay()
     const user = requireUser()
-    return adaptReport(toRawReport(accessibleReport(user, kode), user))
+    return adaptReport(toRawReport(accessibleReport(user, id), user))
   },
 
-  async updateIdentity(kode, tampilkanIdentitas) {
+  async updateIdentity(id, tampilkanIdentitas) {
     await delay()
     const user = requireUser()
-    const report = accessibleReport(user, kode)
+    const report = accessibleReport(user, id)
     if (user.role !== 'santri') {
       fail(403, 'Hanya pelapor yang dapat mengubah ini.')
     }
@@ -271,11 +265,11 @@ export const reports = {
     return adaptReport(toRawReport(report, user))
   },
 
-  async updateStatus(kode, status) {
+  async updateStatus(id, status) {
     await delay()
     const user = requireUser()
     requireRole(user, ['pengurus', 'pimpinan'])
-    const report = accessibleReport(user, kode)
+    const report = accessibleReport(user, id)
     if (!['baru', 'diproses', 'selesai'].includes(status)) {
       fail(422, 'Status tidak dikenal.', { status: ['Status tidak dikenal.'] })
     }
@@ -284,11 +278,11 @@ export const reports = {
     return adaptReport(toRawReport(report, user))
   },
 
-  async escalate(kode, { tujuan, catatan }) {
+  async escalate(id, { tujuan, catatan }) {
     await delay()
     const user = requireUser()
     requireRole(user, ['pengurus', 'pimpinan'])
-    const report = accessibleReport(user, kode)
+    const report = accessibleReport(user, id)
     if (!tujuan) {
       fail(422, 'Pilih tujuan eskalasi.', { tujuan: ['Pilih tujuan eskalasi.'] })
     }
@@ -298,17 +292,17 @@ export const reports = {
 }
 
 export const messages = {
-  async getMessages(kode) {
+  async getMessages(id) {
     await delay()
     const user = requireUser()
-    const report = accessibleReport(user, kode)
+    const report = accessibleReport(user, id)
     return report.messages.map(toRawMessage).map(adaptMessage)
   },
 
-  async sendMessage(kode, body) {
+  async sendMessage(id, body) {
     await delay()
     const user = requireUser()
-    const report = accessibleReport(user, kode)
+    const report = accessibleReport(user, id)
     const text = String(body ?? '').trim()
     if (!text) {
       fail(422, 'Pesan tidak boleh kosong.', { body: ['Pesan tidak boleh kosong.'] })
@@ -326,11 +320,11 @@ export const messages = {
 }
 
 export const notes = {
-  async addNote(kode, body) {
+  async addNote(id, body) {
     await delay()
     const user = requireUser()
     requireRole(user, ['pengurus', 'pimpinan'])
-    const report = accessibleReport(user, kode)
+    const report = accessibleReport(user, id)
     const text = String(body ?? '').trim()
     if (!text) {
       fail(422, 'Catatan tidak boleh kosong.', { body: ['Catatan tidak boleh kosong.'] })
@@ -357,15 +351,10 @@ export const dashboard = {
     const user = requireUser()
     requireRole(user, ['pimpinan'])
     const total = reportStore.length
-    const melewatiBatas = reportStore.filter(
-      (item) => item.status !== 'selesai' && isPastDate(item.batasKlarifikasi),
-    ).length
     return adaptSummary({
       total,
       per_status: countBy(reportStore, 'status'),
       per_kategori: countBy(reportStore, 'kategori'),
-      per_urgensi: countBy(reportStore, 'urgensi'),
-      melewati_batas: melewatiBatas,
     })
   },
 }

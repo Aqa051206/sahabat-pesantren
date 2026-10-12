@@ -18,11 +18,11 @@ export const useMyReports = (page) =>
     placeholderData: (previous) => previous,
   })
 
-export const useReport = (kode) =>
+export const useReport = (id) =>
   useQuery({
-    queryKey: reportKeys.detail(kode),
-    queryFn: () => api.reports.getDetail(kode),
-    enabled: Boolean(kode),
+    queryKey: reportKeys.detail(id),
+    queryFn: () => api.reports.getDetail(id),
+    enabled: Boolean(id),
     retry: retryUnlessClientError,
   })
 
@@ -44,45 +44,45 @@ export const useCreateReport = () => {
   })
 }
 
-export const useUpdateIdentity = (kode) => {
+export const useUpdateIdentity = (id) => {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (tampilkanIdentitas) =>
-      api.reports.updateIdentity(kode, tampilkanIdentitas),
+      api.reports.updateIdentity(id, tampilkanIdentitas),
     onSuccess: (report) => {
-      queryClient.setQueryData(reportKeys.detail(kode), report)
+      queryClient.setQueryData(reportKeys.detail(id), report)
       queryClient.invalidateQueries({ queryKey: ['reports', 'mine'] })
     },
   })
 }
 
-export const useUpdateStatus = (kode) => {
+export const useUpdateStatus = (id) => {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (status) => api.reports.updateStatus(kode, status),
+    mutationFn: (status) => api.reports.updateStatus(id, status),
     onSuccess: (report) => {
-      queryClient.setQueryData(reportKeys.detail(kode), report)
+      queryClient.setQueryData(reportKeys.detail(id), report)
       queryClient.invalidateQueries({ queryKey: ['reports'] })
     },
   })
 }
 
-export const useEscalate = (kode) => {
+export const useEscalate = (id) => {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (payload) => api.reports.escalate(kode, payload),
+    mutationFn: (payload) => api.reports.escalate(id, payload),
     onSuccess: (report) => {
-      queryClient.setQueryData(reportKeys.detail(kode), report)
+      queryClient.setQueryData(reportKeys.detail(id), report)
     },
   })
 }
 
-export const useAddNote = (kode) => {
+export const useAddNote = (id) => {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (body) => api.notes.addNote(kode, body),
+    mutationFn: (body) => api.notes.addNote(id, body),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: reportKeys.detail(kode) })
+      queryClient.invalidateQueries({ queryKey: reportKeys.detail(id) })
     },
   })
 }

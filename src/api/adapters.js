@@ -29,10 +29,9 @@ export const adaptNote = (raw) => ({
 export const adaptReport = (raw) =>
   raw
     ? {
-        kode: raw.kode,
+        id: raw.id,
         noLaporan: raw.no_laporan,
         kategori: raw.kategori,
-        urgensi: raw.urgensi,
         isi: raw.isi,
         tampilkanIdentitas: Boolean(raw.tampilkan_identitas),
         status: raw.status,
@@ -41,7 +40,7 @@ export const adaptReport = (raw) =>
         dieskalasiTujuan: raw.dieskalasi_tujuan ?? null,
         dieskalasiCatatan: raw.dieskalasi_catatan ?? null,
         dieskalasiAt: raw.dieskalasi_at ?? null,
-        createdAt: raw.created_at ?? null,
+        createdAt: raw.waktu ?? raw.created_at ?? null,
         pelaporNama: raw.pelapor_nama ?? null,
         perluKlarifikasi: Boolean(raw.perlu_klarifikasi),
         catatan: Array.isArray(raw.catatan_internal)
@@ -69,6 +68,4 @@ export const adaptSummary = (raw) => ({
   total: raw?.total ?? 0,
   perStatus: raw?.per_status ?? {},
   perKategori: raw?.per_kategori ?? {},
-  perUrgensi: raw?.per_urgensi ?? {},
-  melewatiBatas: raw?.melewati_batas ?? 0,
 })

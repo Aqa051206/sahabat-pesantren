@@ -27,35 +27,43 @@ disebutkan tetap merupakan asumsi sampai dikonfirmasi tim backend.
 - ✅ `POST /api/v1/reports`
 - ✅ `GET /api/v1/reports/mine`
 - ✅ `GET /api/v1/reports`
-- ✅ `GET /api/v1/reports/{kode}`
-- ✅ `PATCH /api/v1/reports/{kode}/identity`
-- ✅ `PATCH /api/v1/reports/{kode}/status`
-- ✅ `POST /api/v1/reports/{kode}/escalate`
-- ✅ `GET /api/v1/reports/{kode}/messages`
-- ✅ `POST /api/v1/reports/{kode}/messages`
-- ✅ `POST /api/v1/reports/{kode}/notes`
+- ✅ `GET /api/v1/reports/{id}`
+- ✅ `PATCH /api/v1/reports/{id}/identity`
+- ✅ `PATCH /api/v1/reports/{id}/status`
+- ✅ `POST /api/v1/reports/{id}/escalate`
+- ✅ `GET /api/v1/reports/{id}/messages`
+- ✅ `POST /api/v1/reports/{id}/messages`
+- ✅ `POST /api/v1/reports/{id}/notes`
 
-⚠️ Asumsi request: membuat laporan `{ kategori, urgensi, isi,
-  tampilkan_identitas }`; memperbarui identitas `{ tampilkan_identitas }`;
+⚠️ Bentuk model laporan yang dikonfirmasi: `{ id, users_id, no_laporan,
+  kategori, isi, tampilkan_identitas, status, waktu }`. Frontend memakai `id`
+  sebagai parameter detail, `no_laporan` sebagai nomor yang ditampilkan, dan
+  `waktu` sebagai tanggal laporan.
+⚠️ Asumsi request: membuat laporan `{ kategori, isi, tampilkan_identitas }`;
+  server menentukan `users_id`, `no_laporan`, `status`, dan `waktu`.
+  Memperbarui identitas `{ tampilkan_identitas }`;
   memperbarui status `{ status }`; eskalasi `{ tujuan, catatan }`; catatan
   internal `{ body }`.
 ⚠️ Asumsi daftar laporan santri memakai `?page=`; daftar petugas memakai
-`?page=&status=&kategori=&urgensi=`.
+`?page=&status=&kategori=`.
 ⚠️ Asumsi endpoint pesan menyediakan percakapan dua arah pelapor–petugas dan
 endpoint catatan internal hanya dapat digunakan petugas.
 
 ### Asumsi bentuk laporan (`data`)
 
-Field snake_case yang digunakan frontend, belum dipastikan kontrak beku:
+Field model yang digunakan frontend:
 
-- `kode`, `no_laporan`
-- `kategori`, `urgensi`, `isi`
+- `id`, `users_id`, `no_laporan`
+- `kategori`, `isi`
 - `tampilkan_identitas` (boolean)
-- `status`, `penerima` (`pengurus` | `pimpinan`)
-- `batas_klarifikasi` (tanggal)
-- `dieskalasi_tujuan`, `dieskalasi_catatan`, `dieskalasi_at`
-- `perlu_klarifikasi` (boolean)
-- `created_at`
+- `status`, `waktu` (tanggal)
+
+Field tambahan berikut bukan bagian dari `$fillable` yang dikonfirmasi; UI
+hanya menggunakannya bila API memang mengirimkannya:
+
+- `penerima` (`pengurus` | `pimpinan`)
+- `batas_klarifikasi`, `dieskalasi_tujuan`, `dieskalasi_catatan`,
+  `dieskalasi_at`, `perlu_klarifikasi`
 - `pelapor_nama` — **hanya terisi bila `tampilkan_identitas = true`**. Inilah
   satu-satunya cara identitas pelapor tampil di UI petugas.
 - `catatan_internal` — array `{ id, body, author_name, created_at }`, hanya
@@ -68,8 +76,8 @@ Field snake_case yang digunakan frontend, belum dipastikan kontrak beku:
 
 - ✅ `GET /api/v1/dashboard/summary`
 
-⚠️ Asumsi respons `{ data: { total, per_status, per_kategori, per_urgensi,
-melewati_batas } }`. Bila backend memakai nama field lain, sesuaikan
+⚠️ Asumsi respons `{ data: { total, per_status, per_kategori } }`. Bila backend
+memakai nama field lain, sesuaikan
 `adaptSummary` di `src/api/adapters.js`.
 
 ## Impor santri (Excel/CSV)

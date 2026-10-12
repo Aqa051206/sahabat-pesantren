@@ -1,5 +1,4 @@
 import {
-  AlertTriangle,
   BarChart3,
   ClipboardList,
   TrendingUp,
@@ -14,8 +13,6 @@ import {
   CATEGORIES,
   CATEGORY_LABELS,
   STATUSES,
-  URGENCIES,
-  URGENCY_LABELS,
 } from '../../lib/constants'
 import { cn } from '../../lib/cn'
 
@@ -107,11 +104,6 @@ export default function DashboardPage() {
     data.perKategori[category.value] ?? 0,
   ]).filter(([, count]) => count > 0)
 
-  const urgensiEntries = URGENCIES.map((urgency) => [
-    URGENCY_LABELS[urgency.value],
-    data.perUrgensi[urgency.value] ?? 0,
-  ])
-
   return (
     <div className="flex flex-col gap-5">
       <header>
@@ -121,19 +113,12 @@ export default function DashboardPage() {
         </p>
       </header>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4">
         <StatCard
           icon={ClipboardList}
           label="Total laporan"
           value={data.total}
           hint="Seluruh laporan yang tercatat."
-        />
-        <StatCard
-          icon={AlertTriangle}
-          label="Melewati batas klarifikasi"
-          value={data.melewatiBatas}
-          tone={data.melewatiBatas > 0 ? 'danger' : 'default'}
-          hint="Belum selesai dan sudah melewati batas."
         />
       </div>
 
@@ -162,7 +147,6 @@ export default function DashboardPage() {
           </Link>
         </Card>
 
-        <Breakdown title="Per urgensi" entries={urgensiEntries} />
       </div>
 
       {kategoriEntries.length ? (

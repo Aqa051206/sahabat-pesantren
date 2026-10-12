@@ -1,5 +1,5 @@
 // Sumber kebenaran tunggal untuk label & konstanta domain.
-// Jangan mendefinisikan label kategori/urgensi/status di tempat lain.
+// Jangan mendefinisikan label kategori/status di tempat lain.
 
 export const ROLES = {
   SANTRI: 'santri',
@@ -50,16 +50,6 @@ export const CATEGORY_LABELS = Object.fromEntries(
   CATEGORIES.map((item) => [item.value, item.label]),
 )
 
-export const URGENCIES = [
-  { value: 'biasa', label: 'Biasa', tone: 'neutral' },
-  { value: 'perlu_perhatian', label: 'Perlu perhatian', tone: 'warning' },
-  { value: 'darurat', label: 'Darurat', tone: 'danger' },
-]
-
-export const URGENCY_LABELS = Object.fromEntries(
-  URGENCIES.map((item) => [item.value, item.label]),
-)
-
 export const STATUSES = [
   { value: 'baru', label: 'Baru', tone: 'new' },
   { value: 'diproses', label: 'Diproses', tone: 'process' },
@@ -87,9 +77,9 @@ export const REPORT_RECIPIENTS = {
   pimpinan: 'Pimpinan',
 }
 
-// Kategori/urgensi yang otomatis diteruskan ke pimpinan.
-export const routesToPimpinan = ({ kategori, urgensi }) =>
-  kategori === 'masalah_pengurus' || urgensi === 'darurat'
+// Laporan tentang pengurus diteruskan langsung ke pimpinan.
+export const routesToPimpinan = ({ kategori }) =>
+  kategori === 'masalah_pengurus'
 
 export const PAGE_SIZE = 8
 

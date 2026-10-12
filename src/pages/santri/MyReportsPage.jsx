@@ -9,7 +9,6 @@ import Skeleton from '../../components/ui/Skeleton'
 import {
   CategoryBadge,
   StatusBadge,
-  UrgencyBadge,
 } from '../../features/reports/components/badges'
 import { useMyReports } from '../../features/reports/hooks'
 import { formatDateOnly } from '../../lib/formatDate'
@@ -48,20 +47,19 @@ export default function MyReportsPage() {
         <>
           <ul className="flex flex-col gap-3">
             {data.items.map((report) => (
-              <li key={report.kode}>
+              <li key={report.id}>
                 <Link
-                  to={`/santri/laporan/${report.kode}`}
+                  to={`/santri/laporan/${report.id}`}
                   className="block rounded-3xl border border-border/70 bg-band-1 p-5 transition-colors hover:border-primary/60"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="font-sans text-xl font-semibold text-primary">
-                      {report.kode}
+                      {report.noLaporan}
                     </span>
                     <StatusBadge status={report.status} />
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2">
                     <CategoryBadge kategori={report.kategori} />
-                    <UrgencyBadge urgensi={report.urgensi} />
                   </div>
                   <p className="mt-3 line-clamp-2 text-sm text-body" data-pre-wrap>
                     {report.isi}

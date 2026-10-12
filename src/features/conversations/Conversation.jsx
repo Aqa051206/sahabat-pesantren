@@ -21,9 +21,9 @@ const schema = z.object({
     .max(1000, 'Pesan terlalu panjang.'),
 })
 
-export function Conversation({ kode, viewer }) {
-  const { data, isLoading, isError, refetch } = useMessages(kode)
-  const sendMessage = useSendMessage(kode)
+export function Conversation({ id, viewer }) {
+  const { data, isLoading, isError, refetch } = useMessages(id)
+  const sendMessage = useSendMessage(id)
   const toast = useToast()
   const listRef = useRef(null)
 

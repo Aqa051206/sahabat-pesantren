@@ -10,15 +10,14 @@ import { Conversation } from '../../features/conversations/Conversation'
 import {
   CategoryBadge,
   StatusBadge,
-  UrgencyBadge,
 } from '../../features/reports/components/badges'
 import { useReport, useUpdateIdentity } from '../../features/reports/hooks'
 import { formatDateOnly } from '../../lib/formatDate'
 
 export default function SantriReportDetailPage() {
-  const { kode } = useParams()
-  const { data: report, isLoading, isError, error, refetch } = useReport(kode)
-  const updateIdentity = useUpdateIdentity(kode)
+  const { id } = useParams()
+  const { data: report, isLoading, isError, error, refetch } = useReport(id)
+  const updateIdentity = useUpdateIdentity(id)
   const toast = useToast()
 
   if (isLoading) {
@@ -81,13 +80,12 @@ export default function SantriReportDetailPage() {
       <Card className="p-5 sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <span className="font-sans text-2xl font-semibold text-primary">
-            {report.kode}
+            {report.noLaporan}
           </span>
           <StatusBadge status={report.status} />
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
           <CategoryBadge kategori={report.kategori} />
-          <UrgencyBadge urgensi={report.urgensi} />
         </div>
         <p className="mt-4 text-sm text-body">
           Dibuat {formatDateOnly(report.createdAt)}
@@ -112,7 +110,7 @@ export default function SantriReportDetailPage() {
         />
       </Card>
 
-      <Conversation kode={kode} viewer="santri" />
+      <Conversation id={id} viewer="santri" />
     </div>
   )
 }

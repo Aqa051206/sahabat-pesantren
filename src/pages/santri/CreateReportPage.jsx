@@ -13,11 +13,10 @@ import { useToast } from '../../components/ui/toast-context'
 import { useAuth } from '../../features/auth/auth-context'
 import { useCreateReport } from '../../features/reports/hooks'
 import { cn } from '../../lib/cn'
-import { CATEGORIES, URGENCIES, routesToPimpinan } from '../../lib/constants'
+import { CATEGORIES, routesToPimpinan } from '../../lib/constants'
 
 const schema = z.object({
   kategori: z.string().min(1, 'Pilih salah satu kategori.'),
-  urgensi: z.string().min(1, 'Pilih tingkat urgensi.'),
   isi: z
     .string()
     .trim()
@@ -47,7 +46,7 @@ function SuccessScreen({ report }) {
           Nomor laporan
         </p>
         <p className="font-sans text-3xl font-semibold text-primary">
-          {report.kode}
+          {report.noLaporan}
         </p>
         <p className="mt-3 text-sm text-body">
           Catat nomor ini. Kamu bisa memantau status dan balasan di halaman
@@ -56,7 +55,7 @@ function SuccessScreen({ report }) {
       </Card>
 
       <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
-        <ButtonLink to={`/santri/laporan/${report.kode}`}>
+        <ButtonLink to={`/santri/laporan/${report.id}`}>
           Lihat laporanku
         </ButtonLink>
         <Button variant="secondary" onClick={quickExit}>
@@ -84,26 +83,22 @@ export default function CreateReportPage() {
     resolver: zodResolver(schema),
     defaultValues: {
       kategori: '',
-      urgensi: '',
       isi: '',
       tampilkan_identitas: false,
     },
   })
 
   const kategori = useWatch({ control, name: 'kategori' })
-  const urgensi = useWatch({ control, name: 'urgensi' })
   const isi = useWatch({ control, name: 'isi' }) ?? ''
   const tampilkanIdentitas = Boolean(
     useWatch({ control, name: 'tampilkan_identitas' }),
   )
-
-  const kePimpinan = routesToPimpinan({ kategori, urgensi })
+  const kePimpinan = routesToPimpinan({ kategori })
 
   const onSubmit = async (values) => {
     try {
       const report = await createReport.mutateAsync({
         kategori: values.kategori,
-        urgensi: values.urgensi,
         isi: values.isi,
         tampilkan_identitas: values.tampilkan_identitas,
       })
@@ -111,7 +106,7 @@ export default function CreateReportPage() {
     } catch (error) {
       if (error?.status === 422 && error.errors) {
         Object.entries(error.errors).forEach(([field, messages]) => {
-          if (['kategori', 'urgensi', 'isi'].includes(field)) {
+          if (['kategori', 'isi'].includes(field)) {
             setError(field, { message: messages[0] })
           }
         })
@@ -192,61 +187,20 @@ export default function CreateReportPage() {
           </fieldset>
         </Card>
 
-        <Card className="p-5 sm:p-6">
-          <fieldset>
-            <legend className="text-lg font-semibold text-navy">
-              Seberapa mendesak?
-            </legend>
-            <div className="mt-3 grid gap-3 sm:grid-cols-3">
-              {URGENCIES.map((option) => {
-                const selected = urgensi === option.value
-                return (
-                  <label
-                    key={option.value}
-                    className={cn(
-                      'cursor-pointer rounded-2xl border p-4 text-center transition-colors',
-                      selected
-                        ? 'border-primary bg-primary/5'
-                        : 'border-border hover:border-primary/70',
-                    )}
-                  >
-                    <input
-                      type="radio"
-                      value={option.value}
-                      className="sr-only"
-                      {...register('urgensi')}
-                    />
-                    <span className="block font-semibold text-navy">
-                      {option.label}
-                    </span>
-                  </label>
-                )
-              })}
-            </div>
-            {errors.urgensi ? (
-              <p role="alert" className="mt-2 text-sm font-medium text-danger">
-                {errors.urgensi.message}
-              </p>
-            ) : null}
-          </fieldset>
+        {kePimpinan ? (
+          <div className="flex items-start gap-2 rounded-2xl border border-primary/40 bg-amber/15 px-4 py-3 text-sm text-navy">
+            <Info aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-primary-hover" />
+            <p>Laporan tentang pengurus akan langsung diteruskan ke pimpinan.</p>
+          </div>
+        ) : null}
 
-          {kePimpinan ? (
-            <div className="mt-4 flex items-start gap-2 rounded-2xl border border-primary/40 bg-amber/15 px-4 py-3 text-sm text-navy">
-              <Info aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-primary-hover" />
-              <p>Laporan ini akan langsung diteruskan ke pimpinan.</p>
-            </div>
-          ) : null}
-
-          {urgensi === 'darurat' ? (
-            <div className="mt-3 flex items-start gap-2 rounded-2xl border border-danger/30 bg-danger-bg px-4 py-3 text-sm text-danger">
-              <LifeBuoy aria-hidden="true" className="mt-0.5 size-5 shrink-0" />
-              <p>
-                Bila ada bahaya langsung, segera hubungi pengurus atau ustaz
-                terdekat, atau layanan SAPA 129.
-              </p>
-            </div>
-          ) : null}
-        </Card>
+        <div className="flex items-start gap-2 rounded-2xl border border-danger/30 bg-danger-bg px-4 py-3 text-sm text-danger">
+          <LifeBuoy aria-hidden="true" className="mt-0.5 size-5 shrink-0" />
+          <p>
+            Bila ada bahaya langsung, segera hubungi pengurus atau ustaz
+            terdekat, atau layanan SAPA 129.
+          </p>
+        </div>
 
         <Card className="p-5 sm:p-6">
           <Textarea

@@ -1,8 +1,8 @@
 export const reportKeys = {
   mine: (page) => ['reports', 'mine', page],
-  detail: (kode) => ['reports', 'detail', kode],
+  detail: (id) => ['reports', 'detail', id],
   staff: (filters) => ['reports', 'staff', filters],
-  conversation: (kode) => ['conversation', kode],
+  conversation: (id) => ['conversation', id],
   summary: () => ['dashboard', 'summary'],
   accounts: (filters) => ['admin', 'accounts', filters],
 }
