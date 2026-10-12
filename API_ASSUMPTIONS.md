@@ -65,7 +65,10 @@ hanya menggunakannya bila API memang mengirimkannya:
 - `batas_klarifikasi`, `dieskalasi_tujuan`, `dieskalasi_catatan`,
   `dieskalasi_at`, `perlu_klarifikasi`
 - `pelapor_nama` — **hanya terisi bila `tampilkan_identitas = true`**. Inilah
-  satu-satunya cara identitas pelapor tampil di UI petugas.
+  satu-satunya cara identitas pelapor tampil di UI petugas. Nilai
+  `tampilkan_identitas` adalah persetujuan santri yang berlaku untuk pengurus
+  dan pimpinan; bila nilainya `false`, UI wajib menyamarkan nama meskipun
+  `pelapor_nama` terisi.
 - `catatan_internal` — array `{ id, body, author_name, created_at }`, hanya
   dikembalikan untuk staff.
 
