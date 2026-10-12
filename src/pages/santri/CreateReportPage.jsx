@@ -120,13 +120,17 @@ export default function CreateReportPage() {
   if (created) return <SuccessScreen report={created} />
 
   return (
-    <div className="mx-auto max-w-2xl">
-      <header className="mb-6 text-center">
-        <ShieldCheck aria-hidden="true" className="mx-auto size-8 text-primary" />
-        <h1 className="mt-3 text-3xl">Ceritakan dengan tenang</h1>
-        <p className="mt-2 text-body">
-          Kamu tidak harus sempurna. Tulis saja apa yang ingin kamu sampaikan.
-        </p>
+    <div className="w-full">
+      <header className="mb-7 flex items-start gap-4">
+        <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-mint-50 text-primary">
+          <ShieldCheck aria-hidden="true" className="size-6" />
+        </span>
+        <div>
+          <h1 className="text-3xl">Ceritakan dengan tenang</h1>
+          <p className="mt-2 text-body">
+            Kamu tidak harus sempurna. Tulis saja apa yang ingin kamu sampaikan.
+          </p>
+        </div>
       </header>
 
       <Card className="mb-6 border-l-4 border-primary p-5 sm:p-6">

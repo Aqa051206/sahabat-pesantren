@@ -122,15 +122,18 @@ export default function DashboardPage() {
         />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-4">
         <Card className="p-5">
           <div className="flex items-center gap-2">
             <BarChart3 aria-hidden="true" className="size-5 text-primary" />
             <h2 className="text-lg font-semibold text-navy">Per status</h2>
           </div>
-          <div className="mt-3 flex flex-wrap gap-4">
+          <div className="mt-3 grid gap-3 sm:grid-cols-3">
             {statusEntries.map((entry) => (
-              <div key={entry.value} className="flex items-center gap-2">
+              <div
+                key={entry.value}
+                className="flex items-center justify-between gap-3 rounded-2xl bg-band-1 p-4"
+              >
                 <StatusBadge status={entry.value} />
                 <span className="text-lg font-semibold text-navy">
                   {entry.count}

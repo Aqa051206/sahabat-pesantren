@@ -1,9 +1,9 @@
 export const VARIANTS = {
   primary:
-    'bg-primary text-white shadow-[0_10px_24px_-8px_rgba(18,198,214,0.65)] hover:-translate-y-0.5 hover:bg-primary-hover active:translate-y-0',
+    'bg-primary text-white shadow-[0_8px_20px_rgba(18,55,42,0.18)] hover:-translate-y-0.5 hover:bg-primary-hover active:translate-y-0',
   secondary:
-    'border border-primary bg-transparent text-primary hover:bg-sky-50',
-  gold: 'bg-amber text-navy hover:opacity-90',
+    'border-2 border-primary bg-transparent text-primary hover:bg-mint-50',
+  gold: 'bg-amber text-navy hover:brightness-95',
   ghost: 'bg-transparent text-primary hover:bg-band-1',
   danger: 'bg-danger text-white hover:bg-red-700',
 }

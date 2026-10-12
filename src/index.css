@@ -1,21 +1,21 @@
 @import 'tailwindcss';
 
 @theme {
-  --color-cyan-400: #12c6d6;
-  --color-primary: #0b7f96;
-  --color-primary-hover: #096a7e;
-  --color-navy: #1c2a5a;
-  --color-body: #5f6b80;
-  --color-mint-50: #e9fbf4;
-  --color-sky-50: #eaf7fd;
-  --color-band-1: #f4fafd;
-  --color-band-2: #f7f9fc;
-  --color-line: #e6edf3;
-  --color-salmon: #ff8a7a;
-  --color-lavender: #8e7cff;
-  --color-pink: #f58db4;
-  --color-leaf: #34c38f;
-  --color-amber: #f5a64a;
+  --color-cyan-400: #f4c95d;
+  --color-primary: #12372a;
+  --color-primary-hover: #214d3b;
+  --color-navy: #12372a;
+  --color-body: #5f6c63;
+  --color-mint-50: #eaf6f0;
+  --color-sky-50: #faf9f5;
+  --color-band-1: #f4f2eb;
+  --color-band-2: #f0f3ee;
+  --color-line: #e4e8e0;
+  --color-salmon: #ff7a59;
+  --color-lavender: #a4b5a4;
+  --color-pink: #f4c5b6;
+  --color-leaf: #83ad8e;
+  --color-amber: #ffd166;
 
   --color-border: var(--color-line);
   --color-status-new: var(--color-navy);
@@ -28,11 +28,11 @@
   --color-danger-bg: #fdecec;
 
   --font-sans:
-    'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI',
+    'Lexend', ui-sans-serif, system-ui, -apple-system, 'Segoe UI',
     sans-serif;
 
-  --radius-2xl: 1rem;
-  --radius-3xl: 1.5rem;
+  --radius-2xl: 1.5rem;
+  --radius-3xl: 1.75rem;
   --radius-4xl: 2rem;
 }
 
@@ -52,7 +52,7 @@
     font-family: var(--font-sans);
     line-height: 1.65;
     color: var(--color-body);
-    background: linear-gradient(180deg, var(--color-mint-50) 0%, var(--color-sky-50) 100%);
+    background: var(--color-sky-50);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
