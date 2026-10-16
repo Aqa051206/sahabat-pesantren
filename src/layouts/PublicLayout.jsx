@@ -19,8 +19,8 @@ export function PublicLayout() {
 
   return (
     <div className="flex min-h-svh flex-col bg-mint-50">
-      <DemoBanner />
-      <header className="relative z-30 bg-mint-50">
+      <header className="fixed inset-x-0 top-0 z-30 w-full bg-mint-50">
+        <DemoBanner />
         <div className="mx-auto flex min-h-[92px] w-full max-w-7xl items-center justify-between gap-5 px-5 sm:px-8 lg:px-12">
           <Link to="/" aria-label="Beranda Sahabat Pesantren" onClick={closeMenu}>
             <Brand />
@@ -60,7 +60,7 @@ export function PublicLayout() {
         ) : null}
       </header>
 
-      <main className="flex-1">
+      <main className={`flex-1 ${USE_MOCK ? 'pt-[124px]' : 'pt-[92px]'}`}>
         <Outlet />
       </main>
 

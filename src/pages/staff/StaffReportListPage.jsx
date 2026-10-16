@@ -89,7 +89,7 @@ export default function StaffReportListPage() {
               <li key={report.id}>
                 <Link
                   to={`/petugas/laporan/${report.id}`}
-                  className="block rounded-3xl border border-border/70 bg-band-1 p-5 transition-colors hover:border-primary/60"
+                  className="block rounded-3xl border border-border/70 bg-white p-5 shadow-sm transition-colors hover:border-primary/60"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="font-sans text-xl font-semibold text-primary">

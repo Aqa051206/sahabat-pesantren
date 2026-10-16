@@ -199,7 +199,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section id="coba" className="scroll-mt-24 bg-sky-50 px-5 py-16 sm:px-8 sm:py-24">
+      <section id="coba" className="scroll-mt-32 bg-sky-50 px-5 py-16 sm:px-8 sm:py-24">
         <div className="mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-[0.9fr_1.1fr]">
           <div>
             <p className="text-sm font-extrabold uppercase tracking-[0.15em] text-primary">
@@ -265,7 +265,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section id="cara" className="scroll-mt-24 bg-mint-50 px-5 py-16 sm:px-8 sm:py-24">
+      <section id="cara" className="scroll-mt-32 bg-mint-50 px-5 py-16 sm:px-8 sm:py-24">
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
             <p className="text-sm font-extrabold uppercase tracking-[0.15em] text-primary">
@@ -319,7 +319,7 @@ export default function HomePage() {
 
       <section
         id="bantuan"
-        className="scroll-mt-24 bg-sky-50 px-5 py-16 sm:px-8 sm:py-24"
+        className="scroll-mt-32 bg-sky-50 px-5 py-16 sm:px-8 sm:py-24"
       >
         <div className="mx-auto max-w-3xl">
           <div className="text-center">
