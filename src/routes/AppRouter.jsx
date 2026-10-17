@@ -23,6 +23,9 @@ const StaffReportDetailPage = lazy(
   () => import('../pages/staff/StaffReportDetailPage'),
 )
 const DashboardPage = lazy(() => import('../pages/pimpinan/DashboardPage'))
+const StaffDashboardPage = lazy(
+  () => import('../pages/staff/StaffDashboardPage'),
+)
 const AccountsPage = lazy(() => import('../pages/pimpinan/AccountsPage'))
 const ForbiddenPage = lazy(() => import('../pages/ForbiddenPage'))
 const NotFoundPage = lazy(() => import('../pages/NotFoundPage'))
@@ -76,6 +79,14 @@ export default function AppRouter() {
           }
         >
           <Route index element={<StaffReportListPage />} />
+          <Route
+            path="dashboard"
+            element={
+              <RequireAuth roles={[ROLES.PENGURUS]}>
+                <StaffDashboardPage />
+              </RequireAuth>
+            }
+          />
           <Route path="laporan/:id" element={<StaffReportDetailPage />} />
         </Route>
 

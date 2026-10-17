@@ -206,8 +206,6 @@ export const reports = {
     if (!payload.kategori) errors.kategori = ['Pilih salah satu kategori.']
     if (isi.length < 20) {
       errors.isi = ['Ceritakan sedikit lebih lengkap, minimal 20 karakter.']
-    } else if (isi.length > 2000) {
-      errors.isi = ['Cerita terlalu panjang, maksimal 2000 karakter.']
     }
     if (Object.keys(errors).length) {
       fail(422, 'Periksa kembali isianmu.', errors)

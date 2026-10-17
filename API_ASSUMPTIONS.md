@@ -94,9 +94,12 @@ dilampirkan berupa JPG/PNG atau PDF, maksimal 5 MB.
 
 - ✅ `GET /api/v1/dashboard/summary`
 
-✅ Respons ringkasan `{ data: { total_santri, total_laporan,
+⚠️ Respons ringkasan `{ data: { total_santri, total_laporan,
 laporan_per_status: { baru, diproses, selesai }, laporan_per_kategori } }`.
 Frontend memetakan field ini melalui `adaptSummary` di `src/api/adapters.js`.
+Endpoint ini hanya digunakan untuk dashboard pimpinan. Dashboard pengurus
+menghitung ringkasan dari `GET /api/v1/reports` dan filter status, sehingga
+data yang dihitung mengikuti laporan yang memang dapat diakses peran tersebut.
 
 ## Impor santri (Excel/CSV)
 
@@ -160,6 +163,8 @@ seksi "Akun Petugas" di `src/pages/pimpinan/AccountsPage.jsx`.
 6. Apakah field `perlu_klarifikasi` dikirim oleh server?
 7. Apakah impor menerima `.xlsx` saja (PRD menyebut Excel), atau juga `.csv`
    dan `.xls`?
+8. Apakah isi laporan memiliki batas panjang di backend? Frontend dan mode mock
+   tidak lagi membatasi panjang cerita.
 
 ## Keamanan (TODO)
 

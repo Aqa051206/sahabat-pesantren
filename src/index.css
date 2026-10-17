@@ -18,17 +18,21 @@
   --color-amber: #ffd166;
 
   --color-border: var(--color-line);
-  --color-status-new: var(--color-navy);
-  --color-status-new-bg: rgba(245, 166, 74, 0.18);
-  --color-status-process: var(--color-navy);
-  --color-status-process-bg: rgba(11, 127, 150, 0.1);
-  --color-status-done: var(--color-navy);
-  --color-status-done-bg: rgba(52, 195, 143, 0.14);
+  --color-status-new: #315d9e;
+  --color-status-new-bg: #dfeaff;
+  --color-status-process: #735b12;
+  --color-status-process-bg: #fff0bd;
+  --color-status-done: #31714d;
+  --color-status-done-bg: #d9f0e1;
+  --color-report-blue: #dce8ff;
+  --color-report-yellow: #fff0c2;
+  --color-report-coral: #ffddd2;
+  --color-report-green: #d7efe0;
   --color-danger: #b42318;
   --color-danger-bg: #fdecec;
 
   --font-sans:
-    'Lexend', ui-sans-serif, system-ui, -apple-system, 'Segoe UI',
+    'Bricolage Grotesque Variable', 'Lexend', ui-sans-serif, system-ui, -apple-system, 'Segoe UI',
     sans-serif;
 
   --radius-2xl: 1.5rem;

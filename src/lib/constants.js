@@ -98,7 +98,7 @@ export const MAX_IMPORT_BYTES = 2 * 1024 * 1024
 
 export const HOME_BY_ROLE = {
   [ROLES.SANTRI]: '/santri/buat-laporan',
-  [ROLES.PENGURUS]: '/petugas',
+  [ROLES.PENGURUS]: '/petugas/dashboard',
   [ROLES.PIMPINAN]: '/pimpinan/dashboard',
 }
 

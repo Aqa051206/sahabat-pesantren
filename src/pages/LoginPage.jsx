@@ -1,4 +1,3 @@
-import '@fontsource-variable/bricolage-grotesque'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { CircleAlert, Eye, EyeOff } from 'lucide-react'
 import { useState } from 'react'

@@ -1,10 +1,16 @@
-import { FileText, Inbox } from 'lucide-react'
-import { useState } from 'react'
+import {
+  AlertTriangle,
+  CheckCircle2,
+  CircleDot,
+  FileText,
+  Hourglass,
+  Inbox,
+  Search,
+} from 'lucide-react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import Card from '../../components/ui/Card'
 import EmptyState from '../../components/ui/EmptyState'
 import ErrorState from '../../components/ui/ErrorState'
-import Input from '../../components/ui/Input'
 import Pagination from '../../components/ui/Pagination'
 import Select from '../../components/ui/Select'
 import Skeleton from '../../components/ui/Skeleton'
@@ -14,22 +20,90 @@ import {
   StatusBadge,
 } from '../../features/reports/components/badges'
 import { useStaffReports } from '../../features/reports/hooks'
-import {
-  CATEGORIES,
-  PAGE_SIZE,
-  STATUSES,
-} from '../../lib/constants'
+import { CATEGORIES, PAGE_SIZE, STATUSES } from '../../lib/constants'
 import { displayReporter } from '../../lib/displayReporter'
-import { formatDateOnly } from '../../lib/formatDate'
+import {
+  dueState,
+  formatDateOnly,
+  parseDateOnly,
+  startOfToday,
+} from '../../lib/formatDate'
+import { cn } from '../../lib/cn'
 
 const ALL = ''
-const withAll = (label, items) => [
-  { value: ALL, label },
-  ...items.map((item) => ({ value: item.value, label: item.label })),
+const EMPTY_REPORTS = []
+const STATUS_FILTERS = [
+  { value: ALL, label: 'Semua' },
+  ...STATUSES.map(({ value, label }) => ({ value, label })),
+]
+const CATEGORY_OPTIONS = [
+  { value: ALL, label: 'Semua kategori' },
+  ...CATEGORIES.map(({ value, label }) => ({ value, label })),
+]
+const STATUS_SUMMARY = [
+  { status: 'baru', label: 'Baru', icon: CircleDot, tone: 'blue' },
+  { status: 'diproses', label: 'Diproses', icon: Hourglass, tone: 'yellow' },
+  { status: 'overdue', label: 'Lewat batas', icon: AlertTriangle, tone: 'coral' },
+  { status: 'selesai', label: 'Selesai', icon: CheckCircle2, tone: 'green' },
 ]
 
-const STATUS_OPTIONS = withAll('Semua status', STATUSES)
-const CATEGORY_OPTIONS = withAll('Semua kategori', CATEGORIES)
+function SummaryCard({ icon: Icon, label, value, tone }) {
+  const toneClasses = {
+    blue: 'bg-report-blue',
+    yellow: 'bg-report-yellow',
+    coral: 'bg-report-coral',
+    green: 'bg-report-green',
+  }
+  const iconClasses = {
+    blue: 'text-[#3156a5]',
+    yellow: 'text-[#80600b]',
+    coral: 'text-danger',
+    green: 'text-[#216b49]',
+  }
+
+  return (
+    <div
+      className={cn(
+        'min-h-28 rounded-[20px] p-3 shadow-[0_8px_24px_rgba(18,55,42,0.05)]',
+        toneClasses[tone],
+      )}
+    >
+      <span className="flex size-8 items-center justify-center rounded-xl bg-white/80">
+        <Icon aria-hidden="true" className={cn('size-5', iconClasses[tone])} />
+      </span>
+      <p className="mt-2 text-3xl font-extrabold leading-none text-navy">{value}</p>
+      <p className="mt-1 text-xs font-semibold leading-none text-navy/80">{label}</p>
+    </div>
+  )
+}
+
+function isOverdue(report) {
+  return report.status !== 'selesai' && dueState(report.batasKlarifikasi) === 'overdue'
+}
+
+function dueDescription(report) {
+  if (report.status === 'selesai') return 'Selesai'
+  const state = dueState(report.batasKlarifikasi)
+  if (state === 'overdue') {
+    const dueDate = parseDateOnly(report.batasKlarifikasi)
+    const daysLate = Math.max(
+      1,
+      Math.floor((startOfToday().getTime() - dueDate.getTime()) / 86400000),
+    )
+    return `Lewat ${daysLate} hari`
+  }
+  if (state === 'today') return 'Batas: hari ini'
+  if (state === 'upcoming') {
+    const dueDate = parseDateOnly(report.batasKlarifikasi)
+    const daysUntil = Math.floor(
+      (dueDate.getTime() - startOfToday().getTime()) / 86400000,
+    )
+    return daysUntil === 1
+      ? 'Batas: besok'
+      : `Batas: ${formatDateOnly(report.batasKlarifikasi)}`
+  }
+  return 'Batas belum ditentukan'
+}
 
 export default function StaffReportListPage() {
   const { user } = useAuth()
@@ -37,127 +111,242 @@ export default function StaffReportListPage() {
     page: 1,
     status: ALL,
     kategori: ALL,
-    kodeLaporan: '',
   })
+  const [search, setSearch] = useState('')
   const { data, isLoading, isError, refetch, isFetching } =
-    useStaffReports(filters)
-  const reports = data?.items ?? []
-  const pageReports = reports.slice(
-    (filters.page - 1) * PAGE_SIZE,
-    filters.page * PAGE_SIZE,
+    useStaffReports({})
+  const reports = data?.items ?? EMPTY_REPORTS
+  const visibleReports = useMemo(() => {
+    const needle = search.trim().toLocaleLowerCase('id')
+    return reports.filter((report) => {
+      const matchesStatus = !filters.status || report.status === filters.status
+      const matchesCategory =
+        !filters.kategori || report.kategori === filters.kategori
+      const matchesSearch =
+        !needle ||
+        [
+          report.noLaporan,
+          report.isi,
+          displayReporter(report, user?.role),
+        ]
+          .join(' ')
+          .toLocaleLowerCase('id')
+          .includes(needle)
+      return matchesStatus && matchesCategory && matchesSearch
+    })
+  }, [filters.kategori, filters.status, reports, search, user?.role])
+  const lastPage = Math.max(1, Math.ceil(visibleReports.length / PAGE_SIZE))
+  const page = Math.min(filters.page, lastPage)
+  const pageReports = visibleReports.slice(
+    (page - 1) * PAGE_SIZE,
+    page * PAGE_SIZE,
   )
-  const lastPage = Math.max(1, Math.ceil(reports.length / PAGE_SIZE))
-
-  const update = (patch) => setFilters((prev) => ({ ...prev, ...patch, page: 1 }))
+  const overdueCount = reports.filter(isOverdue).length
+  const summaries = [
+    reports.filter((report) => report.status === 'baru').length,
+    reports.filter((report) => report.status === 'diproses').length,
+    overdueCount,
+    reports.filter((report) => report.status === 'selesai').length,
+  ]
+  const update = (patch) =>
+    setFilters((current) => ({ ...current, ...patch, page: 1 }))
+  const hasFilters = Boolean(filters.status || filters.kategori || search.trim())
 
   return (
-    <div>
-      <header className="mb-5">
-        <h1 className="text-3xl">Daftar Laporan</h1>
-        <p className="mt-1 text-body">
+    <div className="flex flex-col gap-4">
+      <header>
+        <span className="inline-flex rounded-full bg-[#ffe8a3] px-3 py-1 text-[11px] font-bold text-[#12372a]">
+          Halo, {user?.name}
+        </span>
+        <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-navy sm:text-4xl">
+          Daftar laporan
+        </h1>
+        <p className="mt-1 text-sm text-body">
           Kelola dan tindak lanjuti laporan yang masuk.
         </p>
       </header>
 
-      <Card className="mb-5 p-4">
-        <div className="grid gap-3 sm:grid-cols-3">
-          <Input
-            id="filter-kode-laporan"
-            label="Kode laporan"
-            placeholder="Cari kode laporan"
-            autoComplete="off"
-            value={filters.kodeLaporan}
-            onChange={(event) => update({ kodeLaporan: event.target.value })}
+      {isLoading ? (
+        <section
+          aria-label="Ringkasan status laporan"
+          className="grid grid-cols-2 gap-3 md:grid-cols-4"
+        >
+          {STATUS_SUMMARY.map((item) => (
+            <Skeleton key={item.status} className="h-28 rounded-3xl" />
+          ))}
+        </section>
+      ) : null}
+
+      {!isLoading && !isError ? (
+        <section
+          aria-label="Ringkasan status laporan"
+          className="grid grid-cols-2 gap-3 md:grid-cols-4"
+        >
+          {STATUS_SUMMARY.map((item, index) => (
+            <SummaryCard
+              key={item.status}
+              icon={item.icon}
+              label={item.label}
+              value={summaries[index]}
+              tone={item.tone}
+            />
+          ))}
+        </section>
+      ) : null}
+
+      <section
+        aria-label="Cari dan saring laporan"
+        className="flex flex-col gap-3"
+      >
+        <label className="relative block min-w-0">
+          <span className="sr-only">Cari laporan</span>
+          <Search
+            aria-hidden="true"
+            className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-body"
           />
-          <Select
-            id="filter-status"
-            label="Status"
-            options={STATUS_OPTIONS}
-            value={filters.status}
-            onChange={(event) => update({ status: event.target.value })}
+          <input
+            type="search"
+            value={search}
+            onChange={(event) => {
+              setSearch(event.target.value)
+              setFilters((current) => ({ ...current, page: 1 }))
+            }}
+            placeholder="Cari kode laporan, isi, atau pelapor"
+            className="h-12 w-full rounded-full border border-line bg-white pl-11 pr-4 text-sm text-navy shadow-sm outline-none transition focus:border-primary focus:ring-3 focus:ring-primary/20"
           />
+        </label>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div
+            role="group"
+            aria-label="Filter status laporan"
+            className="flex gap-2 overflow-x-auto pb-1"
+          >
+            {STATUS_FILTERS.map((item) => (
+              <button
+                key={item.value || 'all'}
+                type="button"
+                aria-pressed={filters.status === item.value}
+                onClick={() => update({ status: item.value })}
+                className={cn(
+                  'min-h-10 shrink-0 rounded-full px-4 text-xs font-semibold transition-colors focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-primary',
+                  filters.status === item.value
+                    ? 'bg-primary text-white shadow-[0_5px_14px_rgba(18,55,42,0.18)]'
+                    : 'bg-white text-navy shadow-sm hover:bg-mint-50',
+                )}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
           <Select
             id="filter-kategori"
             label="Kategori"
             options={CATEGORY_OPTIONS}
             value={filters.kategori}
+            className="h-10 rounded-full py-0 text-sm sm:w-64"
             onChange={(event) => update({ kategori: event.target.value })}
           />
         </div>
-      </Card>
+      </section>
 
-      {isLoading ? (
-        <div className="flex flex-col gap-3">
-          <Skeleton className="h-32 w-full" />
-          <Skeleton className="h-32 w-full" />
-          <Skeleton className="h-32 w-full" />
-        </div>
-      ) : isError ? (
+      {isError ? (
         <ErrorState
           message="Daftar laporan gagal dimuat. Coba lagi sebentar."
           onRetry={refetch}
         />
-      ) : reports.length ? (
+      ) : isLoading ? (
+        <div className="flex flex-col gap-3">
+          <Skeleton className="h-24 w-full rounded-3xl" />
+          <Skeleton className="h-24 w-full rounded-3xl" />
+          <Skeleton className="h-24 w-full rounded-3xl" />
+        </div>
+      ) : pageReports.length ? (
         <>
-          <p className="mb-3 text-sm text-body" aria-live="polite">
-            {reports.length} laporan
+          <p className="text-sm text-body" aria-live="polite">
+            {visibleReports.length} laporan
             {isFetching ? ' · memuat ulang…' : ''}
           </p>
           <ul className="flex flex-col gap-3">
-            {pageReports.map((report) => (
-              <li key={report.id}>
-                <Link
-                  to={`/petugas/laporan/${report.id}`}
-                  className="block rounded-3xl border border-border/70 bg-white p-5 shadow-sm transition-colors hover:border-primary/60"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <span className="font-sans text-xl font-semibold text-primary">
-                      {report.noLaporan}
-                    </span>
-                    <StatusBadge status={report.status} />
-                  </div>
-                  <div className="mt-3 flex flex-wrap items-center gap-2">
-                    <CategoryBadge kategori={report.kategori} />
-                  </div>
-                  <p className="mt-3 line-clamp-2 text-sm text-body" data-pre-wrap>
-                    {report.isi}
-                  </p>
-                  <p className="mt-3 text-xs text-body">
-                    {displayReporter(report, user?.role)} · {formatDateOnly(report.createdAt)}
-                  </p>
-                </Link>
-              </li>
-            ))}
+            {pageReports.map((report) => {
+              const overdue = isOverdue(report)
+              return (
+                <li key={report.id}>
+                  <Link
+                    to={`/petugas/laporan/${report.id}`}
+                    className={cn(
+                      'grid gap-4 rounded-3xl p-4 shadow-[0_8px_24px_rgba(18,55,42,0.06)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_12px_28px_rgba(18,55,42,0.1)] sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:p-5',
+                      overdue ? 'bg-[#fff2eb]' : 'bg-white',
+                    )}
+                  >
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-sans text-base font-extrabold text-navy">
+                          {report.noLaporan}
+                        </span>
+                        {overdue ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-salmon px-2.5 py-1 text-[11px] font-bold text-white">
+                            <AlertTriangle aria-hidden="true" className="size-3.5" />
+                            Lewat batas
+                          </span>
+                        ) : null}
+                        <StatusBadge status={report.status} />
+                      </div>
+                      <p
+                        className="mt-2 line-clamp-2 text-sm text-navy"
+                        data-pre-wrap
+                      >
+                        {report.isi}
+                      </p>
+                      <div className="mt-2 flex flex-wrap items-center gap-2">
+                        <CategoryBadge kategori={report.kategori} />
+                        <span className="text-xs text-body">
+                          {displayReporter(report, user?.role)}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs sm:min-w-32 sm:flex-col sm:items-end">
+                      <span
+                        className={cn(
+                          'font-bold',
+                          overdue ? 'text-danger' : 'text-navy',
+                        )}
+                      >
+                        {dueDescription(report)}
+                      </span>
+                      <span className="text-body">
+                        {formatDateOnly(report.createdAt)}
+                      </span>
+                    </div>
+                  </Link>
+                </li>
+              )
+            })}
           </ul>
-          <div className="mt-4">
-            <Pagination
-              page={filters.page}
-              lastPage={lastPage}
-              onChange={(page) => setFilters((prev) => ({ ...prev, page }))}
-            />
-          </div>
+          <Pagination
+            page={page}
+            lastPage={lastPage}
+            onChange={(nextPage) =>
+              setFilters((current) => ({ ...current, page: nextPage }))
+            }
+          />
         </>
       ) : (
         <EmptyState
           icon={Inbox}
-          title="Belum ada laporan"
+          title={hasFilters ? 'Laporan tidak ditemukan' : 'Belum ada laporan'}
           description={
-            filters.status || filters.kategori || filters.kodeLaporan
+            hasFilters
               ? 'Tidak ada laporan yang cocok dengan filter ini.'
               : 'Laporan yang masuk akan tampil di sini.'
           }
           action={
-            filters.status || filters.kategori || filters.kodeLaporan ? (
+            hasFilters ? (
               <button
                 type="button"
-                onClick={() =>
-                  setFilters({
-                    page: 1,
-                    status: ALL,
-                    kategori: ALL,
-                    kodeLaporan: '',
-                  })
-                }
+                onClick={() => {
+                  setSearch('')
+                  setFilters({ page: 1, status: ALL, kategori: ALL })
+                }}
                 className="font-semibold text-primary-hover hover:underline"
               >
                 Bersihkan filter

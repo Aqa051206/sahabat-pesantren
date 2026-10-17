@@ -1,8 +1,16 @@
 import { cn } from '../../lib/cn'
 
-function Switch({ id, label, description, checked, onChange, disabled = false }) {
+function Switch({
+  id,
+  label,
+  description,
+  checked,
+  onChange,
+  disabled = false,
+  className,
+}) {
   return (
-    <div className="flex items-start justify-between gap-4 rounded-2xl border border-border bg-white p-4">
+    <div className={cn('flex items-start justify-between gap-4 rounded-2xl border border-border bg-white p-4', className)}>
       <div className="flex flex-col gap-0.5">
         <label htmlFor={id} className="cursor-pointer font-semibold text-navy">
           {label}
