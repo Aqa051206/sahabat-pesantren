@@ -8,7 +8,10 @@ import {
   adaptSummary,
   adaptUser,
 } from '../adapters'
-import { routesToPimpinan } from '../../lib/constants'
+import {
+  IDENTITY_PROOF_MAX_BYTES,
+  routesToPimpinan,
+} from '../../lib/constants'
 import { clearSession, emitSessionExpired, getToken } from '../../lib/session'
 import {
   accounts,
@@ -65,6 +68,30 @@ const accessibleReport = (user, id) => {
   return report
 }
 
+const PROOF_TYPES = ['image/jpeg', 'image/png', 'application/pdf']
+
+const toRawRequest = (request, viewer) => {
+  // Pengurus tidak perlu tahu soal permintaan ini; hanya pelapor dan pimpinan.
+  if (!request || viewer.role === 'pengurus') return null
+  return {
+    status: request.status,
+    alasan: request.alasan,
+    diminta_oleh: request.dimintaOleh,
+    bukti_nama: request.bukti?.nama ?? null,
+    bukti_url: request.bukti?.url ?? null,
+    dibuat: request.createdAt,
+    dijawab: request.answeredAt,
+  }
+}
+
+// Nama terbuka bila saklar santri menyala (untuk petugas), atau bila santri
+// menyetujui permintaan pimpinan (hanya untuk pimpinan).
+const revealName = (report, viewer) =>
+  viewer.role !== 'santri' &&
+  (report.tampilkanIdentitas ||
+    (viewer.role === 'pimpinan' &&
+      report.permintaanIdentitas?.status === 'disetujui'))
+
 const toRawReport = (report, viewer) => {
   const isStaff = viewer.role !== 'santri'
   return {
@@ -81,7 +108,8 @@ const toRawReport = (report, viewer) => {
     dieskalasi_catatan: report.escalated?.catatan ?? null,
     dieskalasi_at: report.escalated?.at ?? null,
     waktu: report.createdAt,
-    pelapor_nama: report.tampilkanIdentitas ? personName(report.ownerId) : null,
+    pelapor_nama: revealName(report, viewer) ? personName(report.ownerId) : null,
+    permintaan_identitas: toRawRequest(report.permintaanIdentitas, viewer),
     perlu_klarifikasi: report.perluKlarifikasi,
     catatan_internal: isStaff
       ? report.notes.map((note) => ({
@@ -262,6 +290,63 @@ export const reports = {
       fail(403, 'Hanya pelapor yang dapat mengubah ini.')
     }
     report.tampilkanIdentitas = Boolean(tampilkanIdentitas)
+    return adaptReport(toRawReport(report, user))
+  },
+
+  async requestIdentity(id, { alasan, bukti }) {
+    await delay(400)
+    const user = requireUser()
+    requireRole(user, ['pimpinan'])
+    const report = accessibleReport(user, id)
+    const current = report.permintaanIdentitas?.status
+    if (current === 'menunggu') {
+      fail(409, 'Permintaan untuk laporan ini masih menunggu jawaban santri.')
+    }
+    if (current === 'disetujui') {
+      fail(409, 'Santri sudah menyetujui permintaan untuk laporan ini.')
+    }
+    const text = String(alasan ?? '').trim()
+    const errors = {}
+    if (text.length < 20) {
+      errors.alasan = ['Jelaskan alasannya minimal 20 karakter.']
+    } else if (text.length > 1000) {
+      errors.alasan = ['Alasan terlalu panjang, maksimal 1000 karakter.']
+    }
+    if (bukti) {
+      if (!PROOF_TYPES.includes(bukti.type)) {
+        errors.bukti = ['Bukti harus berupa foto JPG/PNG atau berkas PDF.']
+      } else if (bukti.size > IDENTITY_PROOF_MAX_BYTES) {
+        errors.bukti = ['Ukuran bukti maksimal 5 MB.']
+      }
+    }
+    if (Object.keys(errors).length) fail(422, 'Periksa kembali isian.', errors)
+    report.permintaanIdentitas = {
+      status: 'menunggu',
+      alasan: text,
+      dimintaOleh: user.name,
+      bukti: bukti
+        ? { nama: bukti.name, url: URL.createObjectURL(bukti) }
+        : null,
+      createdAt: offsetDate(0),
+      answeredAt: null,
+    }
+    return adaptReport(toRawReport(report, user))
+  },
+
+  async answerIdentityRequest(id, status) {
+    await delay()
+    const user = requireUser()
+    requireRole(user, ['santri'])
+    const report = accessibleReport(user, id)
+    const request = report.permintaanIdentitas
+    if (!request) fail(404, 'Tidak ada permintaan untuk laporan ini.')
+    const allowed =
+      (request.status === 'menunggu' &&
+        ['disetujui', 'ditolak'].includes(status)) ||
+      (request.status === 'disetujui' && status === 'dicabut')
+    if (!allowed) fail(409, 'Permintaan ini tidak bisa diubah lagi.')
+    request.status = status
+    request.answeredAt = offsetDate(0)
     return adaptReport(toRawReport(report, user))
   },
 

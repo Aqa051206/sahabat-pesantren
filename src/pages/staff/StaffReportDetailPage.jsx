@@ -17,6 +17,8 @@ import Skeleton from '../../components/ui/Skeleton'
 import Textarea from '../../components/ui/Textarea'
 import { useToast } from '../../components/ui/toast-context'
 import { Conversation } from '../../features/conversations/Conversation'
+import { useAuth } from '../../features/auth/auth-context'
+import IdentityRequestStaff from '../../features/identity/IdentityRequestStaff'
 import {
   CategoryBadge,
   StatusBadge,
@@ -53,6 +55,7 @@ export default function StaffReportDetailPage() {
   const escalate = useEscalate(id)
   const addNote = useAddNote(id)
   const toast = useToast()
+  const { user } = useAuth()
 
   const [escalateOpen, setEscalateOpen] = useState(false)
   const [tujuan, setTujuan] = useState('')
@@ -222,6 +225,10 @@ export default function StaffReportDetailPage() {
           </div>
         </div>
       </Card>
+
+      {user?.role === 'pimpinan' ? (
+        <IdentityRequestStaff report={report} />
+      ) : null}
 
       <Conversation id={id} viewer="petugas" />
 

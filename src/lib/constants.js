@@ -81,6 +81,17 @@ export const REPORT_RECIPIENTS = {
 export const routesToPimpinan = ({ kategori }) =>
   kategori === 'masalah_pengurus'
 
+// Permintaan pimpinan untuk melihat nama pelapor (harus disetujui santri).
+export const IDENTITY_REQUEST_STATUS = {
+  menunggu: { label: 'Menunggu persetujuan', tone: 'new' },
+  disetujui: { label: 'Disetujui', tone: 'done' },
+  ditolak: { label: 'Ditolak', tone: 'danger' },
+  dicabut: { label: 'Dicabut', tone: 'neutral' },
+}
+
+export const IDENTITY_PROOF_ACCEPT = 'image/jpeg,image/png,application/pdf'
+export const IDENTITY_PROOF_MAX_BYTES = 5 * 1024 * 1024
+
 export const PAGE_SIZE = 8
 
 export const MAX_IMPORT_BYTES = 2 * 1024 * 1024

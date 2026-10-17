@@ -7,6 +7,7 @@ import Skeleton from '../../components/ui/Skeleton'
 import Switch from '../../components/ui/Switch'
 import { useToast } from '../../components/ui/toast-context'
 import { Conversation } from '../../features/conversations/Conversation'
+import IdentityRequestSantri from '../../features/identity/IdentityRequestSantri'
 import {
   CategoryBadge,
   StatusBadge,
@@ -94,6 +95,8 @@ export default function SantriReportDetailPage() {
           {report.isi}
         </p>
       </Card>
+
+      <IdentityRequestSantri report={report} />
 
       <Card className="p-5 sm:p-6">
         <Switch

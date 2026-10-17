@@ -1,6 +1,7 @@
 import { FileText, Plus } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import Badge from '../../components/ui/Badge'
 import ButtonLink from '../../components/ui/ButtonLink'
 import EmptyState from '../../components/ui/EmptyState'
 import ErrorState from '../../components/ui/ErrorState'
@@ -60,6 +61,9 @@ export default function MyReportsPage() {
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2">
                     <CategoryBadge kategori={report.kategori} />
+                    {report.permintaanIdentitas?.status === 'menunggu' ? (
+                      <Badge tone="warning">Ada permintaan untukmu</Badge>
+                    ) : null}
                   </div>
                   <p className="mt-3 line-clamp-2 text-sm text-body" data-pre-wrap>
                     {report.isi}

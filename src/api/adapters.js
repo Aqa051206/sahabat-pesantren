@@ -26,6 +26,19 @@ export const adaptNote = (raw) => ({
   createdAt: raw.created_at ?? null,
 })
 
+export const adaptIdentityRequest = (raw) =>
+  raw
+    ? {
+        status: raw.status,
+        alasan: raw.alasan,
+        diminta: raw.diminta_oleh ?? null,
+        buktiNama: raw.bukti_nama ?? null,
+        buktiUrl: raw.bukti_url ?? null,
+        createdAt: raw.dibuat ?? null,
+        answeredAt: raw.dijawab ?? null,
+      }
+    : null
+
 export const adaptReport = (raw) =>
   raw
     ? {
@@ -43,6 +56,7 @@ export const adaptReport = (raw) =>
         createdAt: raw.waktu ?? raw.created_at ?? null,
         pelaporNama: raw.pelapor_nama ?? null,
         perluKlarifikasi: Boolean(raw.perlu_klarifikasi),
+        permintaanIdentitas: adaptIdentityRequest(raw.permintaan_identitas),
         catatan: Array.isArray(raw.catatan_internal)
           ? raw.catatan_internal.map(adaptNote)
           : [],
