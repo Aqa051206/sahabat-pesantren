@@ -1,0 +1,107 @@
+import { ShieldQuestion } from 'lucide-react'
+import Badge from '../../components/ui/Badge'
+import Button from '../../components/ui/Button'
+import Card from '../../components/ui/Card'
+import { useToast } from '../../components/ui/toast-context'
+import { IDENTITY_REQUEST_STATUS } from '../../lib/constants'
+import { formatDateOnly } from '../../lib/formatDate'
+import { useAnswerIdentityRequest } from '../reports/hooks'
+import { ProofLink } from './IdentityRequestStaff'
+
+// Kartu untuk SANTRI: setujui / tolak permintaan pimpinan.
+export default function IdentityRequestSantri({ report }) {
+  const request = report.permintaanIdentitas
+  const answer = useAnswerIdentityRequest(report.id)
+  const toast = useToast()
+
+  if (!request) return null
+  const status = request.status
+  const pending = status === 'menunggu'
+
+  const respond = (next, message) => {
+    answer.mutate(next, {
+      onSuccess: () => toast.showToast(message, 'success'),
+      onError: (error) =>
+        toast.showToast(error?.message ?? 'Gagal menyimpan jawabanmu.', 'error'),
+    })
+  }
+
+  return (
+    <Card
+      className={
+        pending ? 'border-2 border-primary p-5 sm:p-6' : 'p-5 sm:p-6'
+      }
+      aria-live="polite"
+    >
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="flex items-center gap-2 text-xl">
+          <ShieldQuestion aria-hidden="true" className="size-5 text-primary" />
+          {pending
+            ? `${request.diminta ?? 'Pimpinan'} ingin melihat namamu`
+            : 'Permintaan melihat namamu'}
+        </h2>
+        <Badge tone={IDENTITY_REQUEST_STATUS[status]?.tone}>
+          {IDENTITY_REQUEST_STATUS[status]?.label ?? status}
+        </Badge>
+      </div>
+
+      <p className="mt-3 text-sm font-semibold text-navy">Alasannya:</p>
+      <p className="mt-1 rounded-2xl bg-band-1 p-4 text-sm text-navy" data-pre-wrap>
+        {request.alasan}
+      </p>
+      <div className="mt-2">
+        <ProofLink request={request} />
+      </div>
+
+      {pending ? (
+        <>
+          <p className="mt-4 text-sm text-body">
+            Kamu bebas memilih. Kalau kamu menolak, namamu tetap tersembunyi
+            dan laporanmu tetap diproses. Hanya pimpinan yang akan melihat
+            namamu, dan kamu bisa mencabut persetujuan kapan saja.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <Button
+              loading={answer.isPending}
+              onClick={() => respond('disetujui', 'Kamu menyetujui permintaan ini.')}
+            >
+              Setujui
+            </Button>
+            <Button
+              variant="secondary"
+              disabled={answer.isPending}
+              onClick={() => respond('ditolak', 'Permintaan ditolak. Namamu tetap tersembunyi.')}
+            >
+              Tolak
+            </Button>
+          </div>
+        </>
+      ) : null}
+
+      {status === 'disetujui' ? (
+        <>
+          <p className="mt-4 text-sm text-body">
+            Kamu menyetujui pada {formatDateOnly(request.answeredAt)}. Pimpinan
+            dapat melihat namamu di laporan ini.
+          </p>
+          <div className="mt-4">
+            <Button
+              variant="secondary"
+              loading={answer.isPending}
+              onClick={() => respond('dicabut', 'Persetujuan dicabut. Namamu tersembunyi lagi.')}
+            >
+              Cabut persetujuan
+            </Button>
+          </div>
+        </>
+      ) : null}
+
+      {status === 'ditolak' || status === 'dicabut' ? (
+        <p className="mt-4 text-sm text-body">
+          Kamu {status === 'ditolak' ? 'menolak' : 'mencabut persetujuan'} pada{' '}
+          {formatDateOnly(request.answeredAt)}. Namamu tersembunyi.
+        </p>
+      ) : null}
+    </Card>
+  )
+}

@@ -77,6 +77,28 @@ export const useEscalate = (id) => {
   })
 }
 
+export const useRequestIdentity = (id) => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (payload) => api.reports.requestIdentity(id, payload),
+    onSuccess: (report) => {
+      queryClient.setQueryData(reportKeys.detail(id), report)
+      queryClient.invalidateQueries({ queryKey: ['reports'] })
+    },
+  })
+}
+
+export const useAnswerIdentityRequest = (id) => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (status) => api.reports.answerIdentityRequest(id, status),
+    onSuccess: (report) => {
+      queryClient.setQueryData(reportKeys.detail(id), report)
+      queryClient.invalidateQueries({ queryKey: ['reports'] })
+    },
+  })
+}
+
 export const useAddNote = (id) => {
   const queryClient = useQueryClient()
   return useMutation({

@@ -104,6 +104,15 @@ export const reports = [
     createdAt: offsetDate(-2),
     messages: [],
     notes: [],
+    permintaanIdentitas: {
+      status: 'menunggu',
+      alasan:
+        'Pesantren perlu menemui kamu langsung agar kejadian ini bisa ditindak dan kamu terlindungi.',
+      dimintaOleh: 'KH. Abdullah',
+      bukti: null,
+      createdAt: offsetDate(0),
+      answeredAt: null,
+    },
   },
   {
     id: 2,

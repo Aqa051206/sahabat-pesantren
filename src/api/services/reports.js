@@ -49,3 +49,20 @@ export const escalate = async (id, { tujuan, catatan }) =>
       }),
     ),
   )
+
+// Pimpinan meminta izin melihat nama pelapor. Bukti (opsional) dikirim
+// sebagai berkas; jangan set Content-Type manual agar boundary terisi.
+export const requestIdentity = async (id, { alasan, bukti }) => {
+  const form = new FormData()
+  form.append('alasan', alasan)
+  if (bukti) form.append('bukti', bukti)
+  return adaptReport(
+    unwrap(await http.post(`/reports/${id}/identity-request`, form)),
+  )
+}
+
+// Santri menjawab: status = 'disetujui' | 'ditolak' | 'dicabut'.
+export const answerIdentityRequest = async (id, status) =>
+  adaptReport(
+    unwrap(await http.patch(`/reports/${id}/identity-request`, { status })),
+  )
