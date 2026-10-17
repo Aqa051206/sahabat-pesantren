@@ -3,7 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { CircleAlert, Eye, EyeOff } from 'lucide-react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { z } from 'zod'
 import Brand from '../components/Brand'
 import DemoBanner from '../components/DemoBanner'
@@ -44,7 +44,7 @@ const ANIMATIONS = `
 `
 
 export default function LoginPage() {
-  const { login, isAuthenticated, user } = useAuth()
+  const { login, isAuthenticated } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [formError, setFormError] = useState(location.state?.message ?? null)
@@ -61,11 +61,6 @@ export default function LoginPage() {
     resolver: zodResolver(schema),
     defaultValues: { identifier: '', password: '' },
   })
-
-  if (isAuthenticated && !welcome) {
-    if (user?.mustChangePassword) return <Navigate to="/ganti-password" replace />
-    return <Navigate to={homeForRole(user?.role)} replace />
-  }
 
   const onSubmit = async (values) => {
     setFormError(null)

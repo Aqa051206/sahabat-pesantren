@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import PageFallback from '../components/PageFallback'
+import { RedirectIfAuthenticated } from '../features/auth/RedirectIfAuthenticated'
 import { RequireAuth } from '../features/auth/RequireAuth'
 import { PublicLayout } from '../layouts/PublicLayout'
 import { SantriLayout } from '../layouts/SantriLayout'
@@ -34,7 +35,15 @@ export default function AppRouter() {
           <Route path="/" element={<HomePage />} />
         </Route>
 
-        <Route path="/login" element={<LoginPage />} />
+        <Route
+          path="/login"
+          element={
+            <RedirectIfAuthenticated>
+              <LoginPage />
+            </RedirectIfAuthenticated>
+          }
+        />
+
         <Route
           path="/ganti-password"
           element={
