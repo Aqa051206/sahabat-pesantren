@@ -342,12 +342,17 @@ export const reports = {
     const report = accessibleReport(user, id)
     const request = report.permintaanIdentitas
     if (!request) fail(404, 'Tidak ada permintaan untuk laporan ini.')
-    const allowed =
-      (request.status === 'menunggu' &&
-        ['disetujui', 'ditolak'].includes(status)) ||
-      (request.status === 'disetujui' && status === 'dicabut')
-    if (!allowed) fail(409, 'Permintaan ini tidak bisa diubah lagi.')
-    request.status = status
+    const identityStatus =
+      status === 1 || status === '1' || status === 'disetujui'
+        ? 'disetujui'
+        : status === 0 || status === '0' || status === 'ditolak'
+          ? 'ditolak'
+          : null
+    if (request.status !== 'menunggu' || !identityStatus) {
+      fail(409, 'Permintaan ini tidak bisa diubah lagi.')
+    }
+    request.status = identityStatus
+    report.tampilkanIdentitas = identityStatus === 'disetujui'
     request.answeredAt = offsetDate(0)
     return adaptReport(toRawReport(report, user))
   },

@@ -32,6 +32,10 @@ export const adaptIdentityRequest = (raw) =>
         status:
           raw.status === true || raw.status === 1 || raw.status === '1'
             ? 'disetujui'
+            : raw.status === false ||
+                raw.status === 0 ||
+                raw.status === '0'
+              ? 'ditolak'
             : raw.status,
         alasan: raw.alasan,
         diminta: raw.diminta_oleh ?? null,

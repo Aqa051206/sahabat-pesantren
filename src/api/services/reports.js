@@ -115,8 +115,17 @@ export const requestIdentity = async (id, { alasan, bukti }) => {
   )
 }
 
-// Santri menjawab: status = 'disetujui' | 'ditolak' | 'dicabut'.
-export const answerIdentityRequest = async (id, status) =>
-  adaptReport(
-    unwrap(await http.patch(`/reports/${id}/identity-request`, { status })),
+// Backend menerima status 1 untuk setuju dan 0 untuk menolak.
+export const answerIdentityRequest = async (id, status) => {
+  const answers = { disetujui: 1, ditolak: 0 }
+  if (!Object.hasOwn(answers, status)) {
+    throw new Error('Jawaban permintaan identitas tidak valid.')
+  }
+  return adaptReport(
+    unwrap(
+      await http.patch(`/reports/${id}/identity-request`, {
+        status: answers[status],
+      }),
+    ),
   )
+}

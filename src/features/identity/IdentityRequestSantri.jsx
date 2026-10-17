@@ -5,13 +5,17 @@ import Card from '../../components/ui/Card'
 import { useToast } from '../../components/ui/toast-context'
 import { IDENTITY_REQUEST_STATUS } from '../../lib/constants'
 import { formatDateOnly } from '../../lib/formatDate'
-import { useAnswerIdentityRequest } from '../reports/hooks'
+import {
+  useAnswerIdentityRequest,
+  useUpdateIdentity,
+} from '../reports/hooks'
 import { ProofLink } from './IdentityRequestStaff'
 
 // Kartu untuk SANTRI: setujui / tolak permintaan pimpinan.
 export default function IdentityRequestSantri({ report }) {
   const request = report.permintaanIdentitas
   const answer = useAnswerIdentityRequest(report.id)
+  const updateIdentity = useUpdateIdentity(report.id)
   const toast = useToast()
 
   if (!request) return null
@@ -23,6 +27,21 @@ export default function IdentityRequestSantri({ report }) {
       onSuccess: () => toast.showToast(message, 'success'),
       onError: (error) =>
         toast.showToast(error?.message ?? 'Gagal menyimpan jawabanmu.', 'error'),
+    })
+  }
+
+  const revokeConsent = () => {
+    updateIdentity.mutate(false, {
+      onSuccess: () =>
+        toast.showToast(
+          'Persetujuan dicabut. Namamu disembunyikan lagi.',
+          'success',
+        ),
+      onError: (error) =>
+        toast.showToast(
+          error?.message ?? 'Gagal mencabut persetujuan.',
+          'error',
+        ),
     })
   }
 
@@ -57,19 +76,19 @@ export default function IdentityRequestSantri({ report }) {
         <>
           <p className="mt-4 text-sm text-body">
             Kamu bebas memilih. Kalau kamu menolak, namamu tetap tersembunyi
-            dan laporanmu tetap diproses. Hanya pimpinan yang akan melihat
-            namamu, dan kamu bisa mencabut persetujuan kapan saja.
+            dan laporanmu tetap diproses. Jika menyetujui, namamu akan
+            ditampilkan sesuai pengaturan identitas laporan.
           </p>
           <div className="mt-4 flex flex-wrap gap-3">
             <Button
-              loading={answer.isPending}
+              loading={answer.isPending || updateIdentity.isPending}
               onClick={() => respond('disetujui', 'Kamu menyetujui permintaan ini.')}
             >
               Setujui
             </Button>
             <Button
               variant="secondary"
-              disabled={answer.isPending}
+              disabled={answer.isPending || updateIdentity.isPending}
               onClick={() => respond('ditolak', 'Permintaan ditolak. Namamu tetap tersembunyi.')}
             >
               Tolak
@@ -87,8 +106,8 @@ export default function IdentityRequestSantri({ report }) {
           <div className="mt-4">
             <Button
               variant="secondary"
-              loading={answer.isPending}
-              onClick={() => respond('dicabut', 'Persetujuan dicabut. Namamu tersembunyi lagi.')}
+              loading={updateIdentity.isPending}
+              onClick={revokeConsent}
             >
               Cabut persetujuan
             </Button>
@@ -96,10 +115,10 @@ export default function IdentityRequestSantri({ report }) {
         </>
       ) : null}
 
-      {status === 'ditolak' || status === 'dicabut' ? (
+      {status === 'ditolak' ? (
         <p className="mt-4 text-sm text-body">
-          Kamu {status === 'ditolak' ? 'menolak' : 'mencabut persetujuan'} pada{' '}
-          {formatDateOnly(request.answeredAt)}. Namamu tersembunyi.
+          Kamu menolak pada {formatDateOnly(request.answeredAt)}. Namamu
+          tersembunyi.
         </p>
       ) : null}
     </Card>

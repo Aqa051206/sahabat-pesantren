@@ -36,7 +36,9 @@ disebutkan tetap merupakan asumsi sampai dikonfirmasi tim backend.
 - ✅ `POST /api/v1/reports/{id}/notes`
 - ⚠️ `POST /api/v1/reports/{id}/identity-request` dan
   `PATCH /api/v1/reports/{id}/identity-request` (permintaan dan jawaban izin
-  melihat identitas; belum termasuk kontrak beku).
+  melihat identitas; belum termasuk kontrak beku). Jawaban menerima
+  `status: 1` (setuju) atau `status: 0` (tolak); mencabut persetujuan memakai
+  `PATCH /reports/{id}/identity` dengan `tampilkan_identitas: false`.
 
 ⚠️ Bentuk model laporan yang dikonfirmasi: `{ id, users_id, no_laporan,
   kategori, isi, tampilkan_identitas, status, waktu }`. Frontend memakai `id`
@@ -78,8 +80,8 @@ hanya menggunakannya bila API memang mengirimkannya:
   `pelapor_nama`.
 - `permintaan_identitas` (opsional) — asumsi respons `{ status, alasan,
   diminta_oleh, bukti_nama, bukti_url, dibuat, dijawab }`. Status jawaban
-  `disetujui`, `ditolak`, atau `dicabut`; frontend juga menormalkan nilai
-  `true`/`1` menjadi `disetujui`.
+  `disetujui` atau `ditolak`; frontend menormalkan `true`/`1` menjadi
+  `disetujui` dan `false`/`0` menjadi `ditolak`.
 - `catatan_internal` — array `{ id, body, author_name, created_at }`, hanya
   dikembalikan untuk staff.
 
