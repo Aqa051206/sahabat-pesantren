@@ -8,10 +8,8 @@ import {
   MessageCircle,
   ShieldCheck,
 } from 'lucide-react'
-import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '../features/auth/auth-context'
-import { homeForRole } from '../lib/constants'
+import { useState } from 'react'
+import { Link } from 'react-router-dom'
 
 const QUESTIONS = [
   {
@@ -96,13 +94,7 @@ function ConversationIllustration() {
 }
 
 export default function HomePage() {
-  const { user } = useAuth()
-  const navigate = useNavigate()
   const [showName, setShowName] = useState(false)
-
-  useEffect(() => {
-    if (user) navigate(homeForRole(user.role), { replace: true })
-  }, [user, navigate])
 
   return (
     <div className="overflow-hidden bg-sky-50 text-navy">

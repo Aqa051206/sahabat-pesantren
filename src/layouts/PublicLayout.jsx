@@ -4,6 +4,8 @@ import { Link, Outlet } from 'react-router-dom'
 import Brand from '../components/Brand'
 import DemoBanner from '../components/DemoBanner'
 import ButtonLink from '../components/ui/ButtonLink'
+import { useAuth } from '../features/auth/auth-context'
+import { homeForRole } from '../lib/constants'
 import { USE_MOCK } from '../lib/env'
 
 const NAV_ITEMS = [
@@ -14,6 +16,14 @@ const NAV_ITEMS = [
 
 export function PublicLayout() {
   const [menuOpen, setMenuOpen] = useState(false)
+  const { user, isAuthenticated } = useAuth()
+  const destination =
+    isAuthenticated && user
+      ? user.mustChangePassword
+        ? '/ganti-password'
+        : homeForRole(user.role)
+      : '/login'
+  const actionLabel = isAuthenticated ? 'Dashboard' : 'Masuk'
 
   const closeMenu = () => setMenuOpen(false)
 
@@ -33,7 +43,7 @@ export function PublicLayout() {
             ))}
           </nav>
           <div className="hidden lg:block">
-            <ButtonLink to="/login" size="sm" className="min-w-32 bg-navy text-white hover:bg-primary-hover">Masuk</ButtonLink>
+            <ButtonLink to={destination} size="sm" className="min-w-32 bg-navy text-white hover:bg-primary-hover">{actionLabel}</ButtonLink>
           </div>
           <button
             type="button"
@@ -54,7 +64,7 @@ export function PublicLayout() {
                   {label}
                 </a>
               ))}
-              <ButtonLink to="/login" className="mt-2 bg-navy text-white hover:bg-primary-hover" onClick={closeMenu}>Masuk</ButtonLink>
+              <ButtonLink to={destination} className="mt-2 bg-navy text-white hover:bg-primary-hover" onClick={closeMenu}>{actionLabel}</ButtonLink>
             </div>
           </nav>
         ) : null}
@@ -88,7 +98,7 @@ export function PublicLayout() {
             <h2 className="text-base font-bold text-white">Bantuan</h2>
             <ul className="mt-4 space-y-2 text-sm text-white/75">
               <li><a href="tel:129" className="hover:text-amber">SAPA 129</a></li>
-              <li><Link to="/login" className="hover:text-amber">Masuk</Link></li>
+              <li><Link to={destination} className="hover:text-amber">{actionLabel}</Link></li>
             </ul>
           </div>
         </div>
