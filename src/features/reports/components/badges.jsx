@@ -26,5 +26,18 @@ export function StatusBadge({ status }) {
 }
 
 export function CategoryBadge({ kategori }) {
-  return <Badge tone="gold">{CATEGORY_LABELS[kategori] ?? kategori}</Badge>
+  const tones = {
+    perundungan: 'blue',
+    kekerasan_fisik: 'coral',
+    kekerasan_verbal: 'yellow',
+    masalah_pengurus: 'blue',
+    masalah_pribadi: 'done',
+    lainnya: 'neutral',
+  }
+
+  return (
+    <Badge tone={tones[kategori] ?? 'neutral'}>
+      {CATEGORY_LABELS[kategori] ?? kategori}
+    </Badge>
+  )
 }

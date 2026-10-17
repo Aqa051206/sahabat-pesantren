@@ -5,7 +5,6 @@ import {
   UsersRound,
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import Card from '../../components/ui/Card'
 import ErrorState from '../../components/ui/ErrorState'
 import Skeleton from '../../components/ui/Skeleton'
 import { useSummary } from '../../features/dashboard/hooks'
@@ -19,32 +18,35 @@ import { cn } from '../../lib/cn'
 
 function StatCard({ icon: Icon, label, value, tone = 'default', hint }) {
   return (
-    <Card className="p-5">
-      <div className="flex items-center gap-3">
+    <div className={cn(
+      'rounded-[20px] p-4 shadow-[0_8px_24px_rgba(18,55,42,0.06)]',
+      tone === 'danger' ? 'bg-report-coral' : 'bg-report-blue',
+    )}>
+      <div className="flex flex-col items-start">
         <span
           className={cn(
-            'flex size-11 items-center justify-center rounded-2xl',
+            'flex size-9 items-center justify-center rounded-xl bg-white/80',
             tone === 'danger'
-              ? 'bg-danger-bg text-danger'
-              : 'bg-amber/15 text-primary',
+              ? 'text-danger'
+              : 'text-[#3156a5]',
           )}
         >
           <Icon aria-hidden="true" className="size-5" />
         </span>
         <div>
-          <p className="text-sm font-semibold text-body">{label}</p>
-          <p className="text-3xl font-semibold text-navy">{value}</p>
+          <p className="mt-2 text-3xl font-extrabold leading-none text-navy">{value}</p>
+          <p className="mt-1 text-xs font-semibold text-navy/80">{label}</p>
         </div>
       </div>
-      {hint ? <p className="mt-3 text-sm text-body">{hint}</p> : null}
-    </Card>
+      {hint ? <p className="mt-2 text-xs text-navy/70">{hint}</p> : null}
+    </div>
   )
 }
 
 function Breakdown({ title, entries }) {
   const total = entries.reduce((sum, [, count]) => sum + count, 0)
   return (
-    <Card className="p-5">
+    <div className="rounded-3xl bg-white p-5 shadow-[0_8px_24px_rgba(18,55,42,0.06)]">
       <h2 className="text-lg font-semibold text-navy">{title}</h2>
       <ul className="mt-3 flex flex-col gap-3">
         {entries.map(([key, count]) => {
@@ -55,7 +57,7 @@ function Breakdown({ title, entries }) {
                 <span className="font-medium text-navy">{key}</span>
                 <span className="text-body">{count}</span>
               </div>
-              <div className="mt-1 h-2 overflow-hidden rounded-full bg-white">
+              <div className="mt-1 h-2 overflow-hidden rounded-full bg-[#e5eee7]">
                 <div
                   className="h-full rounded-full bg-primary-hover"
                   style={{ width: `${percent}%` }}
@@ -65,7 +67,7 @@ function Breakdown({ title, entries }) {
           )
         })}
       </ul>
-    </Card>
+    </div>
   )
 }
 
@@ -108,13 +110,16 @@ export default function DashboardPage() {
   return (
     <div className="flex flex-col gap-5">
       <header>
-        <h1 className="text-3xl">Dashboard</h1>
+        <p className="mb-2 inline-flex rounded-full bg-[#ffe8a3] px-3 py-1 text-[11px] font-bold text-[#12372a]">
+          Dashboard pimpinan
+        </p>
+        <h1 className="text-3xl font-extrabold">Dashboard</h1>
         <p className="mt-1 text-body">
           Gambaran umum laporan dan status penanganannya.
         </p>
       </header>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-2 gap-3">
         <StatCard
           icon={UsersRound}
           label="Total santri"
@@ -130,7 +135,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-4">
-        <Card className="p-5">
+        <div className="rounded-3xl bg-white p-5 shadow-[0_8px_24px_rgba(18,55,42,0.06)]">
           <div className="flex items-center gap-2">
             <BarChart3 aria-hidden="true" className="size-5 text-primary" />
             <h2 className="text-lg font-semibold text-navy">Per status</h2>
@@ -155,7 +160,7 @@ export default function DashboardPage() {
             <TrendingUp aria-hidden="true" className="size-4" />
             Lihat semua laporan
           </Link>
-        </Card>
+        </div>
 
       </div>
 

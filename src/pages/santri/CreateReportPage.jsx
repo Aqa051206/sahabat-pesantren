@@ -1,5 +1,16 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { CheckCircle2, Info, LifeBuoy, ShieldCheck } from 'lucide-react'
+import {
+  CheckCircle2,
+  CirclePlus,
+  Heart,
+  Info,
+  LifeBuoy,
+  MessageCircle,
+  Shield,
+  ShieldCheck,
+  UsersRound,
+  Hand,
+} from 'lucide-react'
 import { useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
@@ -8,7 +19,6 @@ import Button from '../../components/ui/Button'
 import ButtonLink from '../../components/ui/ButtonLink'
 import Card from '../../components/ui/Card'
 import Switch from '../../components/ui/Switch'
-import Textarea from '../../components/ui/Textarea'
 import { useToast } from '../../components/ui/toast-context'
 import { useAuth } from '../../features/auth/auth-context'
 import { useCreateReport } from '../../features/reports/hooks'
@@ -20,12 +30,53 @@ const schema = z.object({
   isi: z
     .string()
     .trim()
-    .min(20, 'Ceritakan sedikit lebih lengkap, minimal 20 karakter.')
-    .max(2000, 'Cerita terlalu panjang, maksimal 2000 karakter.'),
+    .min(20, 'Ceritakan sedikit lebih lengkap, minimal 20 karakter.'),
   tampilkan_identitas: z.boolean(),
 })
 
-const MAX = 2000
+const CATEGORY_STYLES = {
+  perundungan: {
+    icon: UsersRound,
+    background: 'bg-[#dfeaff]',
+    iconColor: 'text-[#3d67b2]',
+  },
+  kekerasan_fisik: {
+    icon: Hand,
+    background: 'bg-[#ffddd1]',
+    iconColor: 'text-[#ba4c30]',
+  },
+  kekerasan_verbal: {
+    icon: MessageCircle,
+    background: 'bg-[#fff1c3]',
+    iconColor: 'text-[#87670a]',
+  },
+  masalah_pengurus: {
+    icon: Shield,
+    background: 'bg-[#e8defd]',
+    iconColor: 'text-[#6744ad]',
+  },
+  masalah_pribadi: {
+    icon: Heart,
+    background: 'bg-[#d9f0e1]',
+    iconColor: 'text-[#34744e]',
+  },
+  lainnya: {
+    icon: CirclePlus,
+    background: 'bg-[#edf0ed]',
+    iconColor: 'text-[#59665e]',
+  },
+}
+
+function StepHeading({ number, children }) {
+  return (
+    <legend className="flex items-center gap-2 text-base font-bold text-[#163b2f]">
+      <span className="flex size-5 items-center justify-center rounded-md bg-[#ffd166] text-[10px] font-extrabold text-[#163b2f]">
+        {number}
+      </span>
+      {children}
+    </legend>
+  )
+}
 
 function SuccessScreen({ report }) {
   const { quickExit } = useAuth()
@@ -70,6 +121,7 @@ export default function CreateReportPage() {
   const createReport = useCreateReport()
   const toast = useToast()
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [created, setCreated] = useState(null)
 
   const {
@@ -89,7 +141,6 @@ export default function CreateReportPage() {
   })
 
   const kategori = useWatch({ control, name: 'kategori' })
-  const isi = useWatch({ control, name: 'isi' }) ?? ''
   const tampilkanIdentitas = Boolean(
     useWatch({ control, name: 'tampilkan_identitas' }),
   )
@@ -121,31 +172,32 @@ export default function CreateReportPage() {
 
   return (
     <div className="w-full">
-      <header className="mb-7 flex items-start gap-4">
-        <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-mint-50 text-primary">
-          <ShieldCheck aria-hidden="true" className="size-6" />
+      <header className="mb-5">
+        <span className="inline-flex rounded-full bg-[#ffe99e] px-3 py-1 text-[11px] font-semibold text-[#163b2f]">
+          Halo, {user?.name}
         </span>
         <div>
-          <h1 className="text-3xl">Ceritakan dengan tenang</h1>
-          <p className="mt-2 text-body">
+          <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-[#12372a] sm:text-4xl">Ceritakan dengan tenang</h1>
+          <p className="mt-1 text-sm text-[#718078]">
             Kamu tidak harus sempurna. Tulis saja apa yang ingin kamu sampaikan.
           </p>
         </div>
       </header>
 
-      <Card className="mb-6 border-l-4 border-primary p-5 sm:p-6">
+      <Card className="mb-3 border-2 border-[#c98269] bg-[#fff1e9] p-4 shadow-[0_3px_0_#12372a,0_8px_18px_rgba(18,55,42,0.04)] sm:p-4">
         <div className="flex items-start gap-3">
-          <LifeBuoy aria-hidden="true" className="mt-0.5 size-6 shrink-0 text-primary" />
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#ff765c] text-white">
+            <LifeBuoy aria-hidden="true" className="size-5" />
+          </span>
           <div>
-            <h2 className="font-bold text-navy">Butuh bantuan segera?</h2>
-            <p className="mt-1 text-sm leading-6 text-body">
+            <h2 className="text-sm font-bold text-[#163b2f]">Butuh bantuan segera?</h2>
+            <p className="mt-0.5 text-xs leading-5 text-[#6f746f]">
               Jika kamu sedang dalam bahaya, segera hubungi pengurus atau ustaz
               terdekat. Kamu juga dapat menghubungi SAPA 129 melalui{' '}
-              <a href="tel:129" className="font-semibold text-primary underline underline-offset-2">
+              <a href="tel:129" className="font-semibold text-[#163b2f] underline underline-offset-2">
                 telepon 129
               </a>
-              . Untuk membuat laporan di sini, pilih kategori, ceritakan
-              kejadian, lalu kirim.
+              .
             </p>
           </div>
         </div>
@@ -153,26 +205,27 @@ export default function CreateReportPage() {
 
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className="flex flex-col gap-6"
+        className="flex flex-col gap-3"
         autoComplete="off"
         noValidate
       >
-        <Card className="p-5 sm:p-6">
+        <Card className="p-4 shadow-[0_3px_0_#12372a,0_8px_18px_rgba(18,55,42,0.04)] sm:p-4">
           <fieldset>
-            <legend className="text-lg font-semibold text-navy">
-              Ini tentang apa?
-            </legend>
-            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <StepHeading number="1">Ini tentang apa?</StepHeading>
+            <div className="mt-2 grid gap-2 sm:grid-cols-2">
               {CATEGORIES.map((category) => {
                 const selected = kategori === category.value
+                const style = CATEGORY_STYLES[category.value]
+                const Icon = style.icon
                 return (
                   <label
                     key={category.value}
                     className={cn(
-                      'cursor-pointer rounded-2xl border p-4 transition-colors',
+                      'flex min-h-[58px] cursor-pointer items-center gap-3 rounded-xl border border-transparent px-3 py-2 transition-[border-color,transform] hover:-translate-y-px focus-within:ring-2 focus-within:ring-[#12372a]',
+                      style.background,
                       selected
-                        ? 'border-primary bg-primary/5'
-                        : 'border-border hover:border-primary/70',
+                        ? 'border-[#12372a] shadow-[0_2px_8px_rgba(18,55,42,0.08)]'
+                        : 'hover:border-[#b7c8bc]',
                     )}
                   >
                     <input
@@ -181,21 +234,16 @@ export default function CreateReportPage() {
                       className="sr-only"
                       {...register('kategori')}
                     />
-                    <span className="flex items-center gap-2 font-semibold text-navy">
-                      <span
-                        className={cn(
-                          'flex size-5 items-center justify-center rounded-full border-2',
-                          selected ? 'border-primary' : 'border-border',
-                        )}
-                      >
-                        {selected ? (
-                          <span className="size-2.5 rounded-full bg-primary" />
-                        ) : null}
-                      </span>
-                      {category.label}
+                    <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-white/80">
+                      <Icon aria-hidden="true" className={cn('size-4', style.iconColor)} />
                     </span>
-                    <span className="mt-1 block text-sm text-body">
-                      {category.description}
+                    <span className="min-w-0">
+                      <span className="block text-xs font-bold text-[#163b2f]">
+                        {category.label}
+                      </span>
+                      <span className="mt-0.5 block text-[10px] leading-4 text-[#69766f]">
+                        {category.description}
+                      </span>
                     </span>
                   </label>
                 )
@@ -216,54 +264,61 @@ export default function CreateReportPage() {
           </div>
         ) : null}
 
-        <div className="flex items-start gap-2 rounded-2xl border border-danger/30 bg-danger-bg px-4 py-3 text-sm text-danger">
-          <LifeBuoy aria-hidden="true" className="mt-0.5 size-5 shrink-0" />
-          <p>
-            Bila ada bahaya langsung, segera hubungi pengurus atau ustaz
-            terdekat, atau layanan SAPA 129.
-          </p>
-        </div>
-
-        <Card className="p-5 sm:p-6">
-          <Textarea
-            id="isi"
-            label="Ceritamu"
-            rows={7}
-            required
-            autoComplete="off"
-            placeholder="Tulis di sini dengan bahasamu sendiri…"
-            error={errors.isi?.message}
-            hint={`${Math.min(isi.length, MAX)} / ${MAX} karakter`}
-            {...register('isi')}
-          />
+        <Card className="p-4 shadow-[0_3px_0_#12372a,0_8px_18px_rgba(18,55,42,0.04)] sm:p-4">
+          <fieldset>
+            <StepHeading number="2">Ceritamu</StepHeading>
+            <label htmlFor="isi" className="sr-only">Ceritamu</label>
+            <div className="relative mt-2">
+              <textarea
+                id="isi"
+                rows={5}
+                autoComplete="off"
+                placeholder="Tulis di sini dengan bahasamu sendiri…"
+                aria-invalid={Boolean(errors.isi)}
+                aria-describedby={errors.isi ? 'isi-error' : undefined}
+                className="min-h-28 w-full resize-y rounded-xl border border-transparent bg-[#f3f7f3] px-4 py-3 pb-8 text-sm text-[#163b2f] placeholder:text-[#9aa69e] focus:border-[#12372a] focus:outline-none focus:ring-2 focus:ring-[#12372a]/15"
+                {...register('isi')}
+              />
+            </div>
+            {errors.isi ? (
+              <p id="isi-error" role="alert" aria-live="polite" className="mt-2 text-sm font-medium text-danger">
+                {errors.isi.message}
+              </p>
+            ) : null}
+          </fieldset>
         </Card>
 
-        <Card className="p-5 sm:p-6">
-          <Switch
-            id="tampilkan_identitas"
-            label="Tampilkan namaku ke petugas"
-            description="Nama hanya dapat dilihat pengurus dan pimpinan jika kamu mengaktifkan pilihan ini."
-            checked={tampilkanIdentitas}
-            onChange={(next) =>
-              setValue('tampilkan_identitas', next, { shouldDirty: true })
-            }
-          />
-          <p className="mt-3 flex items-start gap-2 text-sm text-body">
-            <ShieldCheck aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-primary-hover" />
-            Kamu bisa mengubah pilihan ini kapan saja di halaman laporanmu.
-          </p>
+        <Card className="p-4 shadow-[0_3px_0_#12372a,0_8px_18px_rgba(18,55,42,0.04)] sm:p-4">
+          <fieldset>
+            <StepHeading number="3">Soal namamu</StepHeading>
+            <Switch
+              id="tampilkan_identitas"
+              label="Tampilkan namaku ke petugas"
+              description="Nama hanya dapat dilihat pengurus dan pimpinan jika kamu mengaktifkan pilihan ini."
+              checked={tampilkanIdentitas}
+              className="!mt-2 !rounded-xl !border-0 !bg-[#e9f4ed] !px-3 !py-2.5"
+              onChange={(next) =>
+                setValue('tampilkan_identitas', next, { shouldDirty: true })
+              }
+            />
+            <p className="mt-3 flex items-start gap-2 text-xs text-[#5f6c63]">
+              <ShieldCheck aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-[#537363]" />
+              Kamu bisa mengubah pilihan ini kapan saja di halaman laporanmu.
+            </p>
+          </fieldset>
         </Card>
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-end">
           <Button
             type="button"
             variant="ghost"
             onClick={() => navigate('/santri/laporan-saya')}
+            className="!min-h-11 !text-sm"
           >
             Lihat laporan saya
           </Button>
-          <Button type="submit" size="lg" loading={isSubmitting}>
-            Kirim laporan
+          <Button type="submit" size="md" loading={isSubmitting} className="!bg-[#0d352a] !px-6 !text-sm !shadow-[0_8px_20px_rgba(13,53,42,0.2)]">
+            Kirim laporan <span aria-hidden="true">→</span>
           </Button>
         </div>
       </form>
