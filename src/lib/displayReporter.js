@@ -1,10 +1,11 @@
 // Nama hanya tampil bila santri mengizinkan: lewat saklar di laporannya
 // atau lewat persetujuan atas permintaan pimpinan.
-export const identityVisible = (report) =>
+export const identityVisible = (report, viewerRole) =>
   Boolean(report.tampilkanIdentitas) ||
-  report.permintaanIdentitas?.status === 'disetujui'
+  (viewerRole === 'pimpinan' &&
+    report.permintaanIdentitas?.status === 'disetujui')
 
-export const displayReporter = (report) =>
-  identityVisible(report) && report.pelaporNama
+export const displayReporter = (report, viewerRole) =>
+  identityVisible(report, viewerRole) && report.pelaporNama
     ? report.pelaporNama
     : 'Pelapor (identitas disembunyikan)'

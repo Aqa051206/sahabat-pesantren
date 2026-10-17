@@ -102,6 +102,7 @@ export default function CreateReportPage() {
         isi: values.isi,
         tampilkan_identitas: values.tampilkan_identitas,
       })
+      toast.showToast('Laporan berhasil dibuat.', 'success')
       setCreated(report)
     } catch (error) {
       if (error?.status === 422 && error.errors) {

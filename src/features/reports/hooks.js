@@ -10,10 +10,10 @@ import { reportKeys } from './queryKeys'
 const retryUnlessClientError = (count, error) =>
   error?.status >= 500 && count < 1
 
-export const useMyReports = (page) =>
+export const useMyReports = () =>
   useQuery({
-    queryKey: reportKeys.mine(page),
-    queryFn: () => api.reports.getMine({ page }),
+    queryKey: reportKeys.mine(),
+    queryFn: () => api.reports.getMine(),
     retry: retryUnlessClientError,
     placeholderData: (previous) => previous,
   })
@@ -28,7 +28,11 @@ export const useReport = (id) =>
 
 export const useStaffReports = (filters) =>
   useQuery({
-    queryKey: reportKeys.staff(filters),
+    queryKey: reportKeys.staff({
+      status: filters.status,
+      kategori: filters.kategori,
+      kodeLaporan: filters.kodeLaporan,
+    }),
     queryFn: () => api.reports.getList(filters),
     retry: retryUnlessClientError,
     placeholderData: (previous) => previous,
@@ -51,6 +55,7 @@ export const useUpdateIdentity = (id) => {
       api.reports.updateIdentity(id, tampilkanIdentitas),
     onSuccess: (report) => {
       queryClient.setQueryData(reportKeys.detail(id), report)
+      queryClient.invalidateQueries({ queryKey: reportKeys.detail(id) })
       queryClient.invalidateQueries({ queryKey: ['reports', 'mine'] })
     },
   })

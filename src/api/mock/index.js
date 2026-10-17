@@ -132,22 +132,6 @@ const toRawMessage = (item) => ({
 
 const PAGE_SIZE = 8
 
-const toList = (rawItems, page = 1) => {
-  const total = rawItems.length
-  const lastPage = Math.max(1, Math.ceil(total / PAGE_SIZE))
-  const current = Math.min(Math.max(1, page), lastPage)
-  const start = (current - 1) * PAGE_SIZE
-  const slice = rawItems.slice(start, start + PAGE_SIZE)
-  return {
-    items: slice.map(adaptReport),
-    meta: adaptPagination({
-      current_page: current,
-      last_page: lastPage,
-      total,
-    }),
-  }
-}
-
 const countBy = (items, key) =>
   items.reduce((accumulator, item) => {
     const value = item[key]
@@ -254,26 +238,46 @@ export const reports = {
     return adaptReport(toRawReport(report, user))
   },
 
-  async getMine({ page = 1 } = {}) {
+  async getMine() {
     await delay()
     const user = requireUser()
     const mine = reportStore
       .filter((item) => item.ownerId === user.id)
       .map((item) => toRawReport(item, user))
-    return toList(mine, page)
+    return {
+      items: mine.map(adaptReport),
+      meta: adaptPagination({
+        current_page: 1,
+        last_page: 1,
+        total: mine.length,
+        per_page: PAGE_SIZE,
+      }),
+    }
   },
 
-  async getList({ page = 1, status, kategori } = {}) {
+  async getList({ status, kategori, kodeLaporan } = {}) {
     await delay()
     const user = requireUser()
     requireRole(user, ['pengurus', 'pimpinan'])
     let visible = reportStore.filter((item) => canView(user, item))
     if (status) visible = visible.filter((item) => item.status === status)
     if (kategori) visible = visible.filter((item) => item.kategori === kategori)
-    return toList(
-      visible.map((item) => toRawReport(item, user)),
-      page,
-    )
+    if (kodeLaporan?.trim()) {
+      const query = kodeLaporan.trim().toLowerCase()
+      visible = visible.filter((item) =>
+        String(item.noLaporan).toLowerCase().includes(query),
+      )
+    }
+    const items = visible.map((item) => toRawReport(item, user))
+    return {
+      items: items.map(adaptReport),
+      meta: adaptPagination({
+        current_page: 1,
+        last_page: Math.max(1, Math.ceil(items.length / PAGE_SIZE)),
+        total: items.length,
+        per_page: PAGE_SIZE,
+      }),
+    }
   },
 
   async getDetail(id) {

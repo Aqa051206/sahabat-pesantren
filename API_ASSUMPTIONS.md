@@ -34,6 +34,9 @@ disebutkan tetap merupakan asumsi sampai dikonfirmasi tim backend.
 - ✅ `GET /api/v1/reports/{id}/messages`
 - ✅ `POST /api/v1/reports/{id}/messages`
 - ✅ `POST /api/v1/reports/{id}/notes`
+- ⚠️ `POST /api/v1/reports/{id}/identity-request` dan
+  `PATCH /api/v1/reports/{id}/identity-request` (permintaan dan jawaban izin
+  melihat identitas; belum termasuk kontrak beku).
 
 ⚠️ Bentuk model laporan yang dikonfirmasi: `{ id, users_id, no_laporan,
   kategori, isi, tampilkan_identitas, status, waktu }`. Frontend memakai `id`
@@ -44,8 +47,10 @@ disebutkan tetap merupakan asumsi sampai dikonfirmasi tim backend.
   Memperbarui identitas `{ tampilkan_identitas }`;
   memperbarui status `{ status }`; eskalasi `{ tujuan, catatan }`; catatan
   internal `{ body }`.
-⚠️ Asumsi daftar laporan santri memakai `?page=`; daftar petugas memakai
-`?page=&status=&kategori=`.
+⚠️ Daftar laporan santri dan petugas mengambil semua halaman API memakai
+`?page=` lalu menerapkan filter status, kategori, dan kode laporan serta
+pagination di frontend. Respons paginator diharapkan menyediakan `last_page`
+(atau `total` dan `per_page`) agar semua halaman bisa dimuat.
 ⚠️ Asumsi endpoint pesan menyediakan percakapan dua arah pelapor–petugas dan
 endpoint catatan internal hanya dapat digunakan petugas.
 
@@ -64,13 +69,23 @@ hanya menggunakannya bila API memang mengirimkannya:
 - `penerima` (`pengurus` | `pimpinan`)
 - `batas_klarifikasi`, `dieskalasi_tujuan`, `dieskalasi_catatan`,
   `dieskalasi_at`, `perlu_klarifikasi`
-- `pelapor_nama` — **hanya terisi bila `tampilkan_identitas = true`**. Inilah
-  satu-satunya cara identitas pelapor tampil di UI petugas. Nilai
-  `tampilkan_identitas` adalah persetujuan santri yang berlaku untuk pengurus
-  dan pimpinan; bila nilainya `false`, UI wajib menyamarkan nama meskipun
-  `pelapor_nama` terisi.
+- `pelapor_nama` — nama ditampilkan kepada pengurus dan pimpinan bila
+  `tampilkan_identitas = true`. Jika nilainya `false`, nama hanya boleh
+  dikirim kepada pimpinan bila `permintaan_identitas.status` bernilai
+  `disetujui`; persetujuan permintaan tidak membuka nama kepada pengurus.
+  Perubahan status laporan tidak membuka identitas, dan tidak ada override
+  paksa pimpinan. UI tetap menyamarkan nama bila API tidak mengirim
+  `pelapor_nama`.
+- `permintaan_identitas` (opsional) — asumsi respons `{ status, alasan,
+  diminta_oleh, bukti_nama, bukti_url, dibuat, dijawab }`. Status jawaban
+  `disetujui`, `ditolak`, atau `dicabut`; frontend juga menormalkan nilai
+  `true`/`1` menjadi `disetujui`.
 - `catatan_internal` — array `{ id, body, author_name, created_at }`, hanya
   dikembalikan untuk staff.
+
+Permintaan izin memakai multipart dengan `alasan` wajib dan `bukti` opsional;
+frontend tidak mengirim field `bukti` bila berkas tidak dipilih. Bukti yang
+dilampirkan berupa JPG/PNG atau PDF, maksimal 5 MB.
 
 ⚠️ Asumsi paginasi daftar:
 `{ data: [...], meta: { current_page, last_page, total } }`.

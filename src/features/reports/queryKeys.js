@@ -1,5 +1,5 @@
 export const reportKeys = {
-  mine: (page) => ['reports', 'mine', page],
+  mine: () => ['reports', 'mine'],
   detail: (id) => ['reports', 'detail', id],
   staff: (filters) => ['reports', 'staff', filters],
   conversation: (id) => ['conversation', id],

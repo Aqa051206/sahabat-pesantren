@@ -4,9 +4,11 @@ import { Link } from 'react-router-dom'
 import Card from '../../components/ui/Card'
 import EmptyState from '../../components/ui/EmptyState'
 import ErrorState from '../../components/ui/ErrorState'
+import Input from '../../components/ui/Input'
 import Pagination from '../../components/ui/Pagination'
 import Select from '../../components/ui/Select'
 import Skeleton from '../../components/ui/Skeleton'
+import { useAuth } from '../../features/auth/auth-context'
 import {
   CategoryBadge,
   StatusBadge,
@@ -14,6 +16,7 @@ import {
 import { useStaffReports } from '../../features/reports/hooks'
 import {
   CATEGORIES,
+  PAGE_SIZE,
   STATUSES,
 } from '../../lib/constants'
 import { displayReporter } from '../../lib/displayReporter'
@@ -29,13 +32,21 @@ const STATUS_OPTIONS = withAll('Semua status', STATUSES)
 const CATEGORY_OPTIONS = withAll('Semua kategori', CATEGORIES)
 
 export default function StaffReportListPage() {
+  const { user } = useAuth()
   const [filters, setFilters] = useState({
     page: 1,
     status: ALL,
     kategori: ALL,
+    kodeLaporan: '',
   })
   const { data, isLoading, isError, refetch, isFetching } =
     useStaffReports(filters)
+  const reports = data?.items ?? []
+  const pageReports = reports.slice(
+    (filters.page - 1) * PAGE_SIZE,
+    filters.page * PAGE_SIZE,
+  )
+  const lastPage = Math.max(1, Math.ceil(reports.length / PAGE_SIZE))
 
   const update = (patch) => setFilters((prev) => ({ ...prev, ...patch, page: 1 }))
 
@@ -49,7 +60,15 @@ export default function StaffReportListPage() {
       </header>
 
       <Card className="mb-5 p-4">
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-3 sm:grid-cols-3">
+          <Input
+            id="filter-kode-laporan"
+            label="Kode laporan"
+            placeholder="Cari kode laporan"
+            autoComplete="off"
+            value={filters.kodeLaporan}
+            onChange={(event) => update({ kodeLaporan: event.target.value })}
+          />
           <Select
             id="filter-status"
             label="Status"
@@ -78,14 +97,14 @@ export default function StaffReportListPage() {
           message="Daftar laporan gagal dimuat. Coba lagi sebentar."
           onRetry={refetch}
         />
-      ) : data?.items.length ? (
+      ) : reports.length ? (
         <>
           <p className="mb-3 text-sm text-body" aria-live="polite">
-            {data.meta.total} laporan
+            {reports.length} laporan
             {isFetching ? ' · memuat ulang…' : ''}
           </p>
           <ul className="flex flex-col gap-3">
-            {data.items.map((report) => (
+            {pageReports.map((report) => (
               <li key={report.id}>
                 <Link
                   to={`/petugas/laporan/${report.id}`}
@@ -104,7 +123,7 @@ export default function StaffReportListPage() {
                     {report.isi}
                   </p>
                   <p className="mt-3 text-xs text-body">
-                    {displayReporter(report)} · {formatDateOnly(report.createdAt)}
+                    {displayReporter(report, user?.role)} · {formatDateOnly(report.createdAt)}
                   </p>
                 </Link>
               </li>
@@ -112,8 +131,8 @@ export default function StaffReportListPage() {
           </ul>
           <div className="mt-4">
             <Pagination
-              page={data.meta.currentPage}
-              lastPage={data.meta.lastPage}
+              page={filters.page}
+              lastPage={lastPage}
               onChange={(page) => setFilters((prev) => ({ ...prev, page }))}
             />
           </div>
@@ -123,16 +142,21 @@ export default function StaffReportListPage() {
           icon={Inbox}
           title="Belum ada laporan"
           description={
-            filters.status || filters.kategori
+            filters.status || filters.kategori || filters.kodeLaporan
               ? 'Tidak ada laporan yang cocok dengan filter ini.'
               : 'Laporan yang masuk akan tampil di sini.'
           }
           action={
-            filters.status || filters.kategori ? (
+            filters.status || filters.kategori || filters.kodeLaporan ? (
               <button
                 type="button"
                 onClick={() =>
-                  setFilters({ page: 1, status: ALL, kategori: ALL })
+                  setFilters({
+                    page: 1,
+                    status: ALL,
+                    kategori: ALL,
+                    kodeLaporan: '',
+                  })
                 }
                 className="font-semibold text-primary-hover hover:underline"
               >

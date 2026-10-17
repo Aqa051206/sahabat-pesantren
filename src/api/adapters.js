@@ -29,7 +29,10 @@ export const adaptNote = (raw) => ({
 export const adaptIdentityRequest = (raw) =>
   raw
     ? {
-        status: raw.status,
+        status:
+          raw.status === true || raw.status === 1 || raw.status === '1'
+            ? 'disetujui'
+            : raw.status,
         alasan: raw.alasan,
         diminta: raw.diminta_oleh ?? null,
         buktiNama: raw.bukti_nama ?? null,
@@ -54,7 +57,7 @@ export const adaptReport = (raw) =>
         dieskalasiCatatan: raw.dieskalasi_catatan ?? null,
         dieskalasiAt: raw.dieskalasi_at ?? null,
         createdAt: raw.waktu ?? raw.created_at ?? null,
-        pelaporNama: raw.pelapor_nama ?? null,
+        pelaporNama: raw.pelapor_nama ?? raw.user?.name ?? null,
         perluKlarifikasi: Boolean(raw.perlu_klarifikasi),
         permintaanIdentitas: adaptIdentityRequest(raw.permintaan_identitas),
         catatan: Array.isArray(raw.catatan_internal)
@@ -72,11 +75,19 @@ export const adaptAccount = (raw) => ({
   mustChangePassword: Boolean(raw.must_change_password),
 })
 
-export const adaptPagination = (meta) => ({
-  currentPage: meta?.current_page ?? 1,
-  lastPage: meta?.last_page ?? 1,
-  total: meta?.total ?? 0,
-})
+export const adaptPagination = (meta, itemCount = 0) => {
+  const currentPage = Number(meta?.current_page ?? meta?.currentPage ?? 1)
+  const total = Number(
+    meta?.total ?? meta?.total_count ?? meta?.count ?? itemCount,
+  )
+  const perPage = Number(meta?.per_page ?? meta?.perPage ?? (itemCount || 1))
+  const lastPage = Number(
+    meta?.last_page ??
+      meta?.lastPage ??
+      Math.max(1, Math.ceil(total / perPage)),
+  )
+  return { currentPage, lastPage, total, perPage }
+}
 
 export const adaptSummary = (raw) => ({
   totalSantri: raw?.total_santri ?? 0,

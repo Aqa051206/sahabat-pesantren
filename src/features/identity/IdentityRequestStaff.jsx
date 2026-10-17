@@ -42,7 +42,10 @@ export default function IdentityRequestStaff({ report }) {
   const [errors, setErrors] = useState({})
 
   const status = request?.status
-  const canRequest = !status || status === 'ditolak' || status === 'dicabut'
+  const identityApproved =
+    status === 'disetujui' || status === true || status === 1 || status === '1'
+  const canRequest =
+    !report.tampilkanIdentitas && !identityApproved && status !== 'menunggu'
 
   const close = () => {
     setOpen(false)

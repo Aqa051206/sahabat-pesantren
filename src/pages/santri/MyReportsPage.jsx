@@ -5,18 +5,53 @@ import Badge from '../../components/ui/Badge'
 import ButtonLink from '../../components/ui/ButtonLink'
 import EmptyState from '../../components/ui/EmptyState'
 import ErrorState from '../../components/ui/ErrorState'
+import Input from '../../components/ui/Input'
 import Pagination from '../../components/ui/Pagination'
+import Select from '../../components/ui/Select'
 import Skeleton from '../../components/ui/Skeleton'
 import {
   CategoryBadge,
   StatusBadge,
 } from '../../features/reports/components/badges'
 import { useMyReports } from '../../features/reports/hooks'
+import { CATEGORIES, PAGE_SIZE, STATUSES } from '../../lib/constants'
 import { formatDateOnly } from '../../lib/formatDate'
 
+const ALL = ''
+const FILTER_STATUSES = [
+  { value: ALL, label: 'Semua status' },
+  ...STATUSES.map(({ value, label }) => ({ value, label })),
+]
+const FILTER_CATEGORIES = [
+  { value: ALL, label: 'Semua kategori' },
+  ...CATEGORIES.map(({ value, label }) => ({ value, label })),
+]
+
 export default function MyReportsPage() {
-  const [page, setPage] = useState(1)
-  const { data, isLoading, isError, refetch } = useMyReports(page)
+  const [filters, setFilters] = useState({
+    page: 1,
+    status: ALL,
+    kategori: ALL,
+    kodeLaporan: '',
+  })
+  const { data, isLoading, isError, refetch } = useMyReports()
+  const reports = (data?.items ?? []).filter((report) => {
+    const code = filters.kodeLaporan.trim().toLowerCase()
+    return (
+      (!filters.status || report.status === filters.status) &&
+      (!filters.kategori || report.kategori === filters.kategori) &&
+      (!code || String(report.noLaporan ?? '').toLowerCase().includes(code))
+    )
+  })
+  const lastPage = Math.max(1, Math.ceil(reports.length / PAGE_SIZE))
+  const pageReports = reports.slice(
+    (filters.page - 1) * PAGE_SIZE,
+    filters.page * PAGE_SIZE,
+  )
+  const hasFilters =
+    Boolean(filters.status || filters.kategori || filters.kodeLaporan.trim())
+  const updateFilter = (patch) =>
+    setFilters((current) => ({ ...current, ...patch, page: 1 }))
 
   return (
     <div>
@@ -33,6 +68,35 @@ export default function MyReportsPage() {
         </ButtonLink>
       </header>
 
+      <div className="mb-5">
+        <div className="grid gap-3 sm:grid-cols-3">
+          <Input
+            id="my-reports-code-filter"
+            label="Kode laporan"
+            placeholder="Cari kode laporan"
+            autoComplete="off"
+            value={filters.kodeLaporan}
+            onChange={(event) =>
+              updateFilter({ kodeLaporan: event.target.value })
+            }
+          />
+          <Select
+            id="my-reports-status-filter"
+            label="Status"
+            options={FILTER_STATUSES}
+            value={filters.status}
+            onChange={(event) => updateFilter({ status: event.target.value })}
+          />
+          <Select
+            id="my-reports-category-filter"
+            label="Kategori"
+            options={FILTER_CATEGORIES}
+            value={filters.kategori}
+            onChange={(event) => updateFilter({ kategori: event.target.value })}
+          />
+        </div>
+      </div>
+
       {isLoading ? (
         <div className="flex flex-col gap-3">
           <Skeleton className="h-28 w-full" />
@@ -44,10 +108,13 @@ export default function MyReportsPage() {
           message="Laporanmu gagal dimuat. Coba lagi sebentar."
           onRetry={refetch}
         />
-      ) : data?.items.length ? (
+      ) : reports.length ? (
         <>
+          <p className="mb-3 text-sm text-body" aria-live="polite">
+            {reports.length} laporan
+          </p>
           <ul className="flex flex-col gap-3">
-            {data.items.map((report) => (
+            {pageReports.map((report) => (
               <li key={report.id}>
                 <Link
                   to={`/santri/laporan/${report.id}`}
@@ -77,18 +144,43 @@ export default function MyReportsPage() {
           </ul>
           <div className="mt-4">
             <Pagination
-              page={data.meta.currentPage}
-              lastPage={data.meta.lastPage}
-              onChange={setPage}
+              page={filters.page}
+              lastPage={lastPage}
+              onChange={(page) => setFilters((current) => ({ ...current, page }))}
             />
           </div>
         </>
       ) : (
         <EmptyState
           icon={FileText}
-          title="Belum ada laporan"
-          description="Saat kamu siap, kamu bisa membuat laporan pertamamu dengan tenang."
-          action={<ButtonLink to="/santri/buat-laporan">Buat laporan</ButtonLink>}
+          title={hasFilters ? 'Laporan tidak ditemukan' : 'Belum ada laporan'}
+          description={
+            hasFilters
+              ? 'Tidak ada laporan yang cocok dengan filter ini.'
+              : 'Saat kamu siap, kamu bisa membuat laporan pertamamu dengan tenang.'
+          }
+          action={
+            hasFilters ? (
+              <button
+                type="button"
+                onClick={() =>
+                  setFilters({
+                    page: 1,
+                    status: ALL,
+                    kategori: ALL,
+                    kodeLaporan: '',
+                  })
+                }
+                className="font-semibold text-primary-hover hover:underline"
+              >
+                Bersihkan filter
+              </button>
+            ) : (
+              <ButtonLink to="/santri/buat-laporan">
+                Buat laporan
+              </ButtonLink>
+            )
+          }
         />
       )}
     </div>

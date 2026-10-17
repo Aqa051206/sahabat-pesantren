@@ -168,7 +168,7 @@ export default function StaffReportDetailPage() {
 
         <dl className="mt-5 grid gap-4 sm:grid-cols-2">
           <InfoRow label="Pelapor">
-            {displayReporter(report)}
+            {displayReporter(report, user?.role)}
           </InfoRow>
           <InfoRow label="Tanggal laporan">{formatDateOnly(report.createdAt)}</InfoRow>
         </dl>
