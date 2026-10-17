@@ -36,20 +36,17 @@ const ANIMATIONS = `
 .lp-up { animation: lp-up .8s cubic-bezier(.2,.9,.3,1.1) both; }
 .lp-delay { animation-delay: .2s; }
 .lp-swing { animation: lp-swing 1.1s .7s cubic-bezier(.2,1.6,.4,1) both; }
-@keyframes lp-reveal { from { clip-path: circle(0% at 85% 70%); } to { clip-path: circle(150% at 85% 70%); } }
-.lp-reveal { animation: lp-reveal .8s ease-out both; }
 @media (prefers-reduced-motion: reduce) {
-  .lp-wig, .lp-up, .lp-swing, .lp-reveal { animation: none; }
+  .lp-wig, .lp-up, .lp-swing { animation: none; }
 }
 `
 
 export default function LoginPage() {
-  const { login, isAuthenticated } = useAuth()
+  const { login } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [formError, setFormError] = useState(location.state?.message ?? null)
   const [showPassword, setShowPassword] = useState(false)
-  const [welcome, setWelcome] = useState(false)
 
   const {
     register,
@@ -64,17 +61,14 @@ export default function LoginPage() {
 
   const onSubmit = async (values) => {
     setFormError(null)
-    setWelcome(true)
     try {
       const loggedIn = await login(values)
-      await new Promise((resolve) => setTimeout(resolve, 1200))
       if (loggedIn.mustChangePassword) {
         navigate('/ganti-password', { replace: true })
       } else {
         navigate(homeForRole(loggedIn.role), { replace: true })
       }
     } catch (error) {
-      setWelcome(false)
       if (error?.status === 422 && error.errors) {
         Object.entries(error.errors).forEach(([field, messages]) => {
           const key = field === 'identifier' || field === 'password' ? field : null
@@ -100,20 +94,6 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-svh flex-col bg-[#FFF3DC] text-[#14201A] [background-image:radial-gradient(#E9D5AE_1.5px,transparent_1.5px)] [background-size:26px_26px]">
       <style>{ANIMATIONS}</style>
-      {welcome && isAuthenticated ? (
-        <div
-          role="status"
-          aria-live="polite"
-          className="lp-reveal fixed inset-0 z-50 grid place-items-center bg-[#C9B6FF] px-6 text-center"
-        >
-          <p
-            style={DISPLAY}
-            className="text-[clamp(3rem,12vw,7rem)] font-extrabold lowercase leading-none tracking-[-0.05em] text-[#14201A]"
-          >
-            yey, masuk!
-          </p>
-        </div>
-      ) : null}
       <DemoBanner />
 
       <header className="flex items-center justify-between gap-4 px-5 py-5 sm:px-10">

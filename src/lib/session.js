@@ -1,11 +1,11 @@
-// Sesi hanya disimpan di sessionStorage (token tidak pernah ke localStorage).
-// Dilarang menyimpan isi laporan/draf di storage browser.
+// Sesi disimpan di localStorage agar satu browser memakai satu akun dan
+// sinkron antar-tab. Isi laporan/draf tetap dilarang di storage browser.
 
 const SESSION_KEY = 'sp.session'
 
 export const getSession = () => {
   try {
-    const raw = sessionStorage.getItem(SESSION_KEY)
+    const raw = localStorage.getItem(SESSION_KEY)
     return raw ? JSON.parse(raw) : null
   } catch {
     return null
@@ -14,7 +14,7 @@ export const getSession = () => {
 
 export const setSession = (session) => {
   try {
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify(session))
+    localStorage.setItem(SESSION_KEY, JSON.stringify(session))
   } catch {
     // storage tidak tersedia: abaikan, sesi tetap hidup di memori React.
   }
@@ -22,13 +22,24 @@ export const setSession = (session) => {
 
 export const clearSession = () => {
   try {
-    sessionStorage.removeItem(SESSION_KEY)
+    localStorage.removeItem(SESSION_KEY)
   } catch {
     // tidak ada yang perlu dilakukan
   }
 }
 
 export const getToken = () => getSession()?.token ?? null
+
+// Perubahan dari tab lain. Event `storage` hanya terkirim ke tab lain.
+export const onSessionChange = (listener) => {
+  const handle = (event) => {
+    if (event.key === SESSION_KEY || event.key === null) {
+      listener(getSession())
+    }
+  }
+  window.addEventListener('storage', handle)
+  return () => window.removeEventListener('storage', handle)
+}
 
 const listeners = new Set()
 

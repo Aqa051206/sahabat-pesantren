@@ -86,8 +86,11 @@ src/
 
 ## Keamanan & privasi
 
-- Token hanya disimpan di `sessionStorage`, dikirim sebagai header
-  `Authorization: Bearer`.
+- Token disimpan di `localStorage` agar satu browser memakai satu akun dan
+  sesi sinkron antar-tab (masuk/keluar di satu tab berlaku untuk semua tab).
+  Token dikirim sebagai header `Authorization: Bearer`. Karena bertahan
+  setelah browser ditutup, di perangkat bersama wajib memakai keluar cepat
+  atau menunggu henti otomatis.
 - Halaman dan respons selain aset memakai `Cache-Control: no-store, max-age=0`;
   `/assets/*` memakai cache satu tahun dengan `immutable`. `public/_headers`
   berlaku pada host yang mendukung format Netlify; pastikan host lain diberi
@@ -96,7 +99,9 @@ src/
 - CSP membatasi koneksi ke `'self'` secara default. Tambahkan origin API ke
   `connect-src` pada `public/_headers` dan `vercel.json` sebelum memakai API
   lintas origin.
-- Tidak ada `localStorage`, `dangerouslySetInnerHTML`, atau aset eksternal.
+- Tidak ada `dangerouslySetInnerHTML`, atau aset eksternal. Hanya `localStorage`
+  yang dipakai, itupun khusus token sesi; isi laporan/draf tidak pernah
+  disimpan di browser.
 - Identitas pelapor hanya terlihat petugas bila santri mengizinkan
   (`tampilkan_identitas`); UI petugas tidak pernah menampilkan NIS/nomor santri.
 - Semua tanggal di UI petugas hanya menampilkan tanggal (tanpa jam).

@@ -10,11 +10,33 @@ const ACTIVITY_EVENTS = [
   'focus',
 ]
 
+// Aktivitas dibagi antar-tab lewat localStorage agar satu browser memakai satu
+// sesi: bergerak di tab mana pun menahan logout otomatis di semua tab.
+const ACTIVITY_KEY = 'sp.activity'
+const ACTIVITY_WRITE_MS = 5000
+
+const readSharedActivity = () => {
+  try {
+    return Number(localStorage.getItem(ACTIVITY_KEY)) || 0
+  } catch {
+    return 0
+  }
+}
+
+const writeSharedActivity = (value) => {
+  try {
+    localStorage.setItem(ACTIVITY_KEY, String(value))
+  } catch {
+    // storage tidak tersedia: abaikan
+  }
+}
+
 // Logout otomatis karena tidak aktif. Menampilkan hitung mundur 30 detik
 // terakhir lewat `secondsLeft` (null bila tidak ada peringatan).
 export function useIdleTimer({ enabled = true, timeoutSeconds, warnSeconds = 30, onIdle }) {
   const [secondsLeft, setSecondsLeft] = useState(null)
   const lastActivity = useRef(0)
+  const lastWrite = useRef(0)
   const warning = useRef(false)
   const onIdleRef = useRef(onIdle)
 
@@ -23,7 +45,10 @@ export function useIdleTimer({ enabled = true, timeoutSeconds, warnSeconds = 30,
   }, [onIdle])
 
   const stay = useCallback(() => {
-    lastActivity.current = Date.now()
+    const now = Date.now()
+    lastActivity.current = now
+    lastWrite.current = now
+    writeSharedActivity(now)
     warning.current = false
     setSecondsLeft(null)
   }, [])
@@ -33,9 +58,14 @@ export function useIdleTimer({ enabled = true, timeoutSeconds, warnSeconds = 30,
 
     const timeoutMs = timeoutSeconds * 1000
     const warnMs = warnSeconds * 1000
-    lastActivity.current = Date.now()
+    const start = Date.now()
+    lastActivity.current = Math.max(start, readSharedActivity())
+    lastWrite.current = start
 
     const tick = () => {
+      const shared = readSharedActivity()
+      if (shared > lastActivity.current) lastActivity.current = shared
+
       const elapsed = Date.now() - lastActivity.current
       const remaining = timeoutMs - elapsed
 
@@ -53,7 +83,12 @@ export function useIdleTimer({ enabled = true, timeoutSeconds, warnSeconds = 30,
 
     const handleActivity = () => {
       if (warning.current) return
-      lastActivity.current = Date.now()
+      const current = Date.now()
+      lastActivity.current = current
+      if (current - lastWrite.current > ACTIVITY_WRITE_MS) {
+        lastWrite.current = current
+        writeSharedActivity(current)
+      }
     }
 
     const interval = window.setInterval(tick, 1000)
