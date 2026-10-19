@@ -48,13 +48,15 @@ disebutkan tetap merupakan asumsi sampai dikonfirmasi tim backend.
   server menentukan `users_id`, `no_laporan`, `status`, dan `waktu`.
   Memperbarui identitas `{ tampilkan_identitas }`;
   memperbarui status `{ status }`; eskalasi `{ tujuan, catatan }`; catatan
-  internal `{ body }`.
+  internal `{ body }`; pesan percakapan `{ isi }`.
 ⚠️ Daftar laporan santri dan petugas mengambil semua halaman API memakai
 `?page=` lalu menerapkan filter status, kategori, dan kode laporan serta
 pagination di frontend. Respons paginator diharapkan menyediakan `last_page`
 (atau `total` dan `per_page`) agar semua halaman bisa dimuat.
 ⚠️ Asumsi endpoint pesan menyediakan percakapan dua arah pelapor–petugas dan
-endpoint catatan internal hanya dapat digunakan petugas.
+endpoint catatan internal hanya dapat digunakan petugas. Pesan dikirim dengan
+field `isi`; adapter menerima isi respons dari `isi` (serta `pengirim.name`
+untuk nama pengirim) dan mempertahankan model internal frontend.
 
 ### Asumsi bentuk laporan (`data`)
 

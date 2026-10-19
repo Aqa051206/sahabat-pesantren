@@ -126,7 +126,7 @@ const toRawMessage = (item) => ({
   id: item.id,
   from: item.from,
   sender_name: item.from === 'petugas' ? item.senderName : null,
-  body: item.body,
+  isi: item.body,
   created_at: item.createdAt,
 })
 
@@ -397,7 +397,7 @@ export const messages = {
     const report = accessibleReport(user, id)
     const text = String(body ?? '').trim()
     if (!text) {
-      fail(422, 'Pesan tidak boleh kosong.', { body: ['Pesan tidak boleh kosong.'] })
+      fail(422, 'Pesan tidak boleh kosong.', { isi: ['Pesan tidak boleh kosong.'] })
     }
     const item = {
       id: nextMessageId(),

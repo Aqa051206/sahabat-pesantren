@@ -155,6 +155,7 @@ export default function CreateReportPage() {
       })
       toast.showToast('Laporan berhasil dibuat.', 'success')
       setCreated(report)
+      navigate('/santri/laporan-saya')
     } catch (error) {
       if (error?.status === 422 && error.errors) {
         Object.entries(error.errors).forEach(([field, messages]) => {

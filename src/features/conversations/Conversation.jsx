@@ -11,6 +11,7 @@ import Skeleton from '../../components/ui/Skeleton'
 import { cn } from '../../lib/cn'
 import { formatDateOnly } from '../../lib/formatDate'
 import { useToast } from '../../components/ui/toast-context'
+import { useAuth } from '../auth/auth-context'
 import { useMessages, useSendMessage } from './hooks'
 
 const schema = z.object({
@@ -21,8 +22,27 @@ const schema = z.object({
     .max(1000, 'Pesan terlalu panjang.'),
 })
 
+const sortMessagesOldestFirst = (messages) =>
+  messages
+    .map((message, index) => ({
+      message,
+      index,
+      timestamp: Date.parse(message.createdAt ?? ''),
+    }))
+    .sort((a, b) => {
+      const aHasTimestamp = Number.isFinite(a.timestamp)
+      const bHasTimestamp = Number.isFinite(b.timestamp)
+      if (!aHasTimestamp || !bHasTimestamp) {
+        return aHasTimestamp === bHasTimestamp ? a.index - b.index : aHasTimestamp ? -1 : 1
+      }
+      return a.timestamp - b.timestamp || a.index - b.index
+    })
+    .map(({ message }) => message)
+
 export function Conversation({ id, viewer }) {
+  const { user } = useAuth()
   const { data, isLoading, isError, refetch } = useMessages(id)
+  const messages = data ? sortMessagesOldestFirst(data) : []
   const sendMessage = useSendMessage(id)
   const toast = useToast()
   const listRef = useRef(null)
@@ -40,15 +60,34 @@ export function Conversation({ id, viewer }) {
     }
   }, [data])
 
-  const labelFor = (message) => {
-    if (viewer === 'santri') {
-      return message.from === 'santri' ? 'Kamu' : 'Petugas'
+  const senderRoleFor = (message) => {
+    if (message.from === 'santri') return 'santri'
+    if (
+      message.from === 'petugas' ||
+      message.from === 'pengurus' ||
+      message.from === 'pimpinan'
+    ) {
+      return 'petugas'
     }
-    return message.from === 'santri' ? 'Pelapor' : message.senderName || 'Petugas'
+    if (
+      (message.senderId != null &&
+        user?.id != null &&
+        String(message.senderId) === String(user.id)) ||
+      (message.senderName && user?.name && message.senderName === user.name)
+    ) {
+      return viewer === 'santri' ? 'santri' : 'petugas'
+    }
+    return viewer === 'santri' ? 'petugas' : 'santri'
   }
 
-  const isOwn = (message) =>
-    viewer === 'santri' ? message.from === 'santri' : message.from === 'petugas'
+  const labelFor = (message, senderRole) => {
+    if (viewer === 'santri') {
+      return senderRole === 'santri' ? 'Kamu' : 'Petugas'
+    }
+    return senderRole === 'santri' ? 'Pelapor' : message.senderName || 'Petugas'
+  }
+
+  const isOwn = (senderRole) => senderRole === viewer
 
   const onSubmit = async (values) => {
     try {
@@ -83,30 +122,34 @@ export function Conversation({ id, viewer }) {
             message="Coba muat ulang percakapan."
             onRetry={refetch}
           />
-        ) : data?.length ? (
-          data.map((message) => (
-            <div
-              key={message.id}
-              className={cn(
-                'flex flex-col gap-1 rounded-2xl px-4 py-3',
-                isOwn(message)
-                  ? 'self-end bg-primary text-white'
-                  : 'self-start bg-band-1 text-navy',
-              )}
-            >
-              <div className="flex items-center gap-2 text-xs font-semibold">
-                <span className={isOwn(message) ? 'text-white' : 'text-primary'}>
-                  {labelFor(message)}
-                </span>
-                <span className={isOwn(message) ? 'text-white/70' : 'text-body'}>
-                  {formatDateOnly(message.createdAt)}
-                </span>
+        ) : messages.length ? (
+          messages.map((message) => {
+            const senderRole = senderRoleFor(message)
+            const own = isOwn(senderRole)
+            return (
+              <div
+                key={message.id}
+                className={cn(
+                  'flex flex-col gap-1 rounded-2xl px-4 py-3',
+                  own
+                    ? 'self-end bg-primary text-white'
+                    : 'self-start bg-band-1 text-navy',
+                )}
+              >
+                <div className="flex items-center gap-2 text-xs font-semibold">
+                  <span className={own ? 'text-white' : 'text-primary'}>
+                    {labelFor(message, senderRole)}
+                  </span>
+                  <span className={own ? 'text-white/70' : 'text-body'}>
+                    {formatDateOnly(message.createdAt)}
+                  </span>
+                </div>
+                <p data-pre-wrap className="text-sm">
+                  {message.body}
+                </p>
               </div>
-              <p data-pre-wrap className="text-sm">
-                {message.body}
-              </p>
-            </div>
-          ))
+            )
+          })
         ) : (
           <EmptyState
             icon={MessageCircle}

@@ -13,9 +13,10 @@ export const adaptUser = (raw) =>
 
 export const adaptMessage = (raw) => ({
   id: raw.id,
-  body: raw.body,
-  from: raw.from,
-  senderName: raw.sender_name ?? null,
+  body: raw.isi ?? raw.body,
+  from: raw.from ?? raw.pengirim?.role ?? null,
+  senderId: raw.pengirim?.id ?? raw.pengirim?.users_id ?? null,
+  senderName: raw.sender_name ?? raw.pengirim?.name ?? null,
   createdAt: raw.created_at ?? null,
 })
 

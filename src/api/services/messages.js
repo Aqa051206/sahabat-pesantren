@@ -9,4 +9,4 @@ export const getMessages = async (id) => {
 }
 
 export const sendMessage = async (id, body) =>
-  adaptMessage(unwrap(await http.post(`/reports/${id}/messages`, { body })))
+  adaptMessage(unwrap(await http.post(`/reports/${id}/messages`, { isi: body })))
