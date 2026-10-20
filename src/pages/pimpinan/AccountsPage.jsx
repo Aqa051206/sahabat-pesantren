@@ -23,10 +23,11 @@ import {
   useCreateAccount,
   useImportSantri,
   usePreviewImport,
+  useSantriExport,
   useSetAccountActive,
   useTemplate,
 } from '../../features/accounts/hooks'
-import { downloadCsv } from '../../lib/csv'
+import { downloadBlob, downloadCsv } from '../../lib/csv'
 import { cn } from '../../lib/cn'
 import { MAX_IMPORT_BYTES, ROLE_LABELS, ROLES } from '../../lib/constants'
 
@@ -48,7 +49,7 @@ const CREATE_ROLE_OPTIONS = [
   { value: ROLES.PIMPINAN, label: ROLE_LABELS[ROLES.PIMPINAN] },
 ]
 
-const ACCEPTED_EXT = ['.csv', '.xlsx', '.xls']
+const ACCEPTED_EXT = ['.xlsx']
 
 function AccountsTab() {
   const toast = useToast()
@@ -279,6 +280,7 @@ function ImportTab() {
   const toast = useToast()
   const inputRef = useRef(null)
   const template = useTemplate()
+  const santriExport = useSantriExport()
   const preview = usePreviewImport()
   const importMut = useImportSantri()
 
@@ -302,11 +304,13 @@ function ImportTab() {
     }
     const lower = selected.name.toLowerCase()
     if (!ACCEPTED_EXT.some((ext) => lower.endsWith(ext))) {
-      toast.showToast('Berkas harus berupa CSV atau Excel.', 'error')
+      setFile(null)
+      toast.showToast('Berkas harus berupa Excel .xlsx.', 'error')
       event.target.value = ''
       return
     }
     if (selected.size > MAX_IMPORT_BYTES) {
+      setFile(null)
       toast.showToast('Ukuran berkas maksimal 2 MB.', 'error')
       event.target.value = ''
       return
@@ -325,7 +329,10 @@ function ImportTab() {
     try {
       const data = await importMut.mutateAsync({ file, acknowledged })
       setResult(data)
-      toast.showToast(`${data.imported} akun santri dibuat.`, 'success')
+      toast.showToast(
+        `Impor selesai: ${data.created} baru, ${data.updated} diperbarui.`,
+        'success',
+      )
     } catch (error) {
       toast.showToast(error?.message ?? 'Impor gagal.', 'error')
     }
@@ -333,10 +340,16 @@ function ImportTab() {
 
   const downloadTemplate = () => {
     if (!template.data) return
-    downloadCsv(template.data.filename, [
-      template.data.columns,
-      ...template.data.rows,
-    ])
+    downloadBlob('template-santri.xlsx', template.data)
+  }
+
+  const downloadSantri = async () => {
+    try {
+      const blob = await santriExport.mutateAsync()
+      downloadBlob('data-santri.xlsx', blob)
+    } catch (error) {
+      toast.showToast(error?.message ?? 'Gagal mengunduh data santri.', 'error')
+    }
   }
 
   const downloadCredentials = () => {
@@ -351,7 +364,10 @@ function ImportTab() {
     ])
   }
 
-  const validCount = rows?.filter((row) => row.valid).length ?? 0
+  const newCount = rows?.filter((row) => row.action === 'new').length ?? 0
+  const updateCount = rows?.filter((row) => row.action === 'update').length ?? 0
+  const unchangedCount =
+    rows?.filter((row) => row.action === 'unchanged').length ?? 0
   const invalidCount = rows?.filter((row) => !row.valid).length ?? 0
 
   return (
@@ -362,9 +378,20 @@ function ImportTab() {
           Langkah 1 — Siapkan berkas
         </h2>
         <p className="mt-1 text-sm text-body">
-          Unggah berkas CSV atau Excel berisi data santri. Ukuran maksimal 2 MB.
+          Unduh data, edit di Excel, lalu unggah kembali. ID Santri dipakai untuk
+          mencocokkan data dan tidak boleh diubah. Baris tanpa ID membuat akun
+          baru; baris yang tidak dicantumkan tidak dihapus. Ukuran maksimal 2 MB.
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-3">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={downloadSantri}
+            loading={santriExport.isPending}
+          >
+            <Download aria-hidden="true" className="size-4" />
+            Unduh data santri
+          </Button>
           <Button
             variant="secondary"
             size="sm"
@@ -379,7 +406,7 @@ function ImportTab() {
             ref={inputRef}
             id="import-file"
             type="file"
-            accept={ACCEPTED_EXT.join(',')}
+            accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             className="sr-only"
             onChange={handleFile}
           />
@@ -393,6 +420,13 @@ function ImportTab() {
         </div>
       </Card>
 
+      {template.isError ? (
+        <ErrorState
+          message="Template Excel gagal dimuat."
+          onRetry={template.refetch}
+        />
+      ) : null}
+
       {preview.isPending ? (
         <Skeleton className="h-40 w-full" />
       ) : rows ? (
@@ -403,17 +437,19 @@ function ImportTab() {
                 Langkah 2 — Periksa pratinjau
               </h2>
               <span className="text-sm text-body">
-                {validCount} valid · {invalidCount} perlu diperbaiki
+                {newCount} baru · {updateCount} diperbarui · {unchangedCount}{' '}
+                tidak berubah · {invalidCount} bermasalah
               </span>
             </div>
             <div className="mt-4 overflow-x-auto">
-              <table className="w-full min-w-[32rem] border-collapse text-sm">
+              <table className="w-full min-w-[48rem] border-collapse text-sm">
                 <thead>
                   <tr className="text-left text-body">
                     <th className="px-3 py-2 font-semibold">#</th>
-                    <th className="px-3 py-2 font-semibold">Nama</th>
-                    <th className="px-3 py-2 font-semibold">NIS</th>
-                    <th className="px-3 py-2 font-semibold">Kelas</th>
+                    <th className="px-3 py-2 font-semibold">ID Santri</th>
+                    <th className="px-3 py-2 font-semibold">NISN</th>
+                    <th className="px-3 py-2 font-semibold">Nama Santri</th>
+                    <th className="px-3 py-2 font-semibold">Perubahan</th>
                     <th className="px-3 py-2 font-semibold">Status</th>
                   </tr>
                 </thead>
@@ -421,9 +457,16 @@ function ImportTab() {
                   {rows.map((row) => (
                     <tr key={row.index} className="border-t border-border">
                       <td className="px-3 py-2 text-body">{row.index}</td>
+                      <td className="px-3 py-2 text-navy">{row.idSantri || 'Baru'}</td>
+                      <td className="px-3 py-2 text-navy">{row.nisn || '—'}</td>
                       <td className="px-3 py-2 text-navy">{row.name || '—'}</td>
-                      <td className="px-3 py-2 text-navy">{row.nis || '—'}</td>
-                      <td className="px-3 py-2 text-navy">{row.kelas || '—'}</td>
+                      <td className="px-3 py-2 text-navy">
+                        {row.action === 'new'
+                          ? 'Santri baru'
+                          : row.action === 'update'
+                            ? 'Perbarui data'
+                            : 'Tidak berubah'}
+                      </td>
                       <td className="px-3 py-2">
                         {row.valid ? (
                           <span className="inline-flex items-center gap-1 text-status-done">
@@ -461,10 +504,10 @@ function ImportTab() {
               <Button
                 onClick={doImport}
                 loading={importMut.isPending}
-                disabled={!acknowledged || invalidCount > 0}
+                disabled={!file || !rows?.length || !acknowledged || invalidCount > 0}
               >
                 <Upload aria-hidden="true" className="size-4" />
-                Impor {validCount} data
+                Terapkan {newCount + updateCount} perubahan
               </Button>
             </div>
           </Card>
@@ -478,37 +521,46 @@ function ImportTab() {
             Impor selesai
           </h2>
           <p className="mt-1 text-sm text-body">
-            {result.imported} akun santri berhasil dibuat. Bagikan kata sandi
-            sementara ini secara aman.
+            {result.created} akun baru dibuat, {result.updated} data diperbarui,
+            dan {result.unchanged} tidak berubah. Baris yang tidak tercantum
+            tidak dihapus atau dinonaktifkan.
           </p>
-          <div className="mt-4 overflow-x-auto">
-            <table className="w-full min-w-[28rem] border-collapse text-sm">
-              <thead>
-                <tr className="text-left text-body">
-                  <th className="px-3 py-2 font-semibold">Nama</th>
-                  <th className="px-3 py-2 font-semibold">ID pengguna</th>
-                  <th className="px-3 py-2 font-semibold">Kata sandi sementara</th>
-                </tr>
-              </thead>
-              <tbody>
-                {result.accounts.map((account) => (
-                  <tr key={account.username} className="border-t border-border">
-                    <td className="px-3 py-2 text-navy">{account.name}</td>
-                    <td className="px-3 py-2 text-navy">{account.username}</td>
-                    <td className="px-3 py-2 font-mono text-navy">
-                      {account.temporaryPassword}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div className="mt-4 flex justify-end">
-            <Button variant="secondary" size="sm" onClick={downloadCredentials}>
-              <Download aria-hidden="true" className="size-4" />
-              Unduh daftar akun
-            </Button>
-          </div>
+          {result.accounts.length ? (
+            <>
+              <div className="mt-4 overflow-x-auto">
+                <table className="w-full min-w-[28rem] border-collapse text-sm">
+                  <thead>
+                    <tr className="text-left text-body">
+                      <th className="px-3 py-2 font-semibold">Nama</th>
+                      <th className="px-3 py-2 font-semibold">ID pengguna</th>
+                      <th className="px-3 py-2 font-semibold">Kata sandi sementara</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {result.accounts.map((account) => (
+                      <tr key={account.username} className="border-t border-border">
+                        <td className="px-3 py-2 text-navy">{account.name}</td>
+                        <td className="px-3 py-2 text-navy">{account.username}</td>
+                        <td className="px-3 py-2 font-mono text-navy">
+                          {account.temporaryPassword}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="mt-4 flex justify-end">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={downloadCredentials}
+                >
+                  <Download aria-hidden="true" className="size-4" />
+                  Unduh daftar akun
+                </Button>
+              </div>
+            </>
+          ) : null}
         </Card>
       ) : null}
     </div>

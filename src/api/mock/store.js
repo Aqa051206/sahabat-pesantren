@@ -16,6 +16,7 @@ export const accounts = [
   {
     id: 1,
     username: 'santri1',
+    nisn: '20260011',
     password: 'santri123',
     name: 'Ahmad Fauzi',
     role: 'santri',
@@ -25,6 +26,7 @@ export const accounts = [
   {
     id: 2,
     username: 'santri2',
+    nisn: '20260012',
     password: 'santri123',
     name: 'Siti Aminah',
     role: 'santri',

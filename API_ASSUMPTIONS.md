@@ -103,21 +103,37 @@ Endpoint ini hanya digunakan untuk dashboard pimpinan. Dashboard pengurus
 menghitung ringkasan dari `GET /api/v1/reports` dan filter status, sehingga
 data yang dihitung mengikuti laporan yang memang dapat diakses peran tersebut.
 
-## Impor santri (Excel/CSV)
+## Impor dan ekspor santri (XLSX)
 
-- ✅ `GET /api/v1/admin/santri/template`
-- ✅ `POST /api/v1/admin/santri/import`
+Base URL yang ditampilkan dokumentasi backend adalah
+`https://www.piancollections.my.id/api`; frontend menggunakan base URL tersebut
+dengan menambahkan prefix `/api` ke origin.
 
-⚠️ Asumsi: respons template `{ data: { filename, columns, rows } }`.
-Template dari endpoint mock berupa CSV, sedangkan PRD menyebut template Excel.
-Frontend mengasumsikan file impor berukuran ≤ 2 MB dengan ekstensi
-`.csv/.xlsx/.xls`. Tidak ada endpoint preview terpisah yang diketahui; frontend
-memanggil endpoint impor yang sama dengan parameter `?preview=1` dan berharap respons
-`{ data: { rows: [{ index, name, nis, kelas, valid, errors[] }] } }`. Bila ada
-endpoint khusus, ubah `previewImport` di `src/api/services/admin.js`.
+### Kontrak backend saat ini (dokumentasi `/docs/api`)
 
-⚠️ Bentuk respons impor final yang diharapkan:
-`{ data: { imported: number, accounts: [{ name, username, role, temporary_password }] } }`.
+- ✅ `GET /api/admin/santri/template` — respons berkas XLSX.
+- ✅ `POST /api/admin/santri/import` — multipart dengan field `action`
+  (`preview` atau `import`) dan `file`.
+- ✅ `GET /api/santri` — daftar `{ santri: [...], message }`; dokumentasi
+  menggunakan schema `User` (id, name, email, role, status), bukan NISN.
+- ⚠️ Tidak ada `GET /api/admin/santri/export` pada dokumentasi yang diperiksa.
+
+Kontrak impor yang terdokumentasi meminta kolom `name`, `email`, `nis`,
+`jenis_kelamin`, dan `telepon_ortu`. Preview mengembalikan `data`, `errors`,
+`can_import`, dan `message`; impor final mengembalikan `imported` dan `message`.
+Kontrak ini belum memuat `ID Santri` sebagai kunci update, NISN, klasifikasi
+baris `new/update/unchanged`, maupun daftar sandi sementara unik. Sementara itu,
+frontend pembaruan santri saat ini mengharapkan file dengan kolom `ID Santri`,
+`NISN`, `Nama Santri`, preview menggunakan baris dengan `action` dan `valid`,
+serta hasil impor berisi jumlah dibuat/diperbarui/tidak berubah dan kredensial
+akun baru.
+
+Jadi dokumentasi backend saat ini **belum cocok** dengan alur unduh → edit →
+unggah yang diminta. Jangan sekadar mengganti prefix atau memetakan `nis` ke
+`NISN`: perlu konfirmasi/penyesuaian kontrak backend untuk route ekspor serta
+semantik impor pembaruan yang mempertahankan akun yang tidak tercantum.
+Ekspor hanya boleh berisi ID Santri, NISN, dan nama; akses ekspor/impor harus
+dibatasi untuk pimpinan.
 
 ## Akun petugas — ⚠️ DIASUMSIKAN SELURUHNYA
 

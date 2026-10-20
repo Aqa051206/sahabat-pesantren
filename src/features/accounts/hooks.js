@@ -42,5 +42,18 @@ export const useTemplate = () =>
 export const usePreviewImport = () =>
   useMutation({ mutationFn: (file) => api.admin.previewImport(file) })
 
-export const useImportSantri = () =>
-  useMutation({ mutationFn: (payload) => api.admin.importSantri(payload) })
+export const useImportSantri = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (payload) => api.admin.importSantri(payload),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['admin', 'accounts'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard', 'summary'] }),
+      ])
+    },
+  })
+}
+
+export const useSantriExport = () =>
+  useMutation({ mutationFn: () => api.admin.getSantriExport() })

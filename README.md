@@ -51,6 +51,15 @@ Salin `.env.example` menjadi `.env` bila perlu menyesuaikan:
 Akun `santri2` dan akun baru hasil impor akan diminta ganti kata sandi saat
 masuk pertama kali.
 
+## Pembaruan data santri
+
+Pimpinan dapat mengunduh data santri sebagai Excel `.xlsx`, mengedit kolom
+NISN/nama, lalu mengunggah file itu kembali dari halaman Kelola Akun. Kolom ID
+Santri adalah kunci pencocokan sistem dan tidak boleh diubah. Baris dengan ID
+kosong membuat akun baru; baris yang tidak ada di file tidak dihapus atau
+dinonaktifkan. Akun baru mendapat sandi sementara unik dan wajib menggantinya
+saat login pertama. Ekspor data tidak memuat sandi.
+
 ## Checklist sebelum deploy produksi
 
 - Set `VITE_USE_MOCK=false` agar data contoh tidak dipakai.

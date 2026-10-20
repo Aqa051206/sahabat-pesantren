@@ -12,6 +12,10 @@ import {
   IDENTITY_PROOF_MAX_BYTES,
   routesToPimpinan,
 } from '../../lib/constants'
+import {
+  createSantriWorkbook,
+  readSantriWorkbook,
+} from '../../lib/santriWorkbook'
 import { clearSession, emitSessionExpired, getToken } from '../../lib/session'
 import {
   accounts,
@@ -142,9 +146,11 @@ const countBy = (items, key) =>
 export const auth = {
   async login({ identifier, password }) {
     await delay()
+    const normalizedIdentifier = String(identifier).trim().toLowerCase()
     const account = accounts.find(
       (item) =>
-        item.username.toLowerCase() === String(identifier).trim().toLowerCase(),
+        item.username.toLowerCase() === normalizedIdentifier ||
+        String(item.nisn ?? '').toLowerCase() === normalizedIdentifier,
     )
     if (!account || account.password !== password) {
       fail(401, 'NIS/ID atau kata sandi salah.')
@@ -451,22 +457,63 @@ export const dashboard = {
   },
 }
 
-const simulatePreview = (file) => {
-  const base = file?.name?.replace(/\.[^.]+$/, '') ?? 'data'
-  return [
-    { index: 1, name: 'Ahmad Fauzi', nis: '20260011', kelas: '7A', valid: true, errors: [] },
-    { index: 2, name: 'Siti Aminah', nis: '20260012', kelas: '7B', valid: true, errors: [] },
-    { index: 3, name: '', nis: '20260013', kelas: '8A', valid: false, errors: ['Nama kosong'] },
-    { index: 4, name: 'Ridwan Hakim', nis: '', kelas: '8B', valid: false, errors: ['NIS kosong'] },
-    {
-      index: 5,
-      name: `Contoh dari ${base}`,
-      nis: '20260015',
-      kelas: '9A',
-      valid: true,
-      errors: [],
-    },
-  ]
+const previewSantriImport = async (file) => {
+  const uploadedRows = await readSantriWorkbook(file)
+  const ids = new Map()
+  const nisns = new Map()
+
+  uploadedRows.forEach((row) => {
+    if (row.idSantri) ids.set(row.idSantri, (ids.get(row.idSantri) ?? 0) + 1)
+    if (row.nisn) nisns.set(row.nisn, (nisns.get(row.nisn) ?? 0) + 1)
+  })
+
+  const santriAccounts = accounts.filter((account) => account.role === 'santri')
+  return {
+    rows: uploadedRows.map((row) => {
+      const errors = []
+      const existing = row.idSantri
+        ? santriAccounts.find((account) => String(account.id) === row.idSantri)
+        : null
+
+      if (!row.nisn) errors.push('NISN wajib diisi.')
+      else if (!row.nisnIsText) {
+        errors.push('NISN harus berformat teks agar angka nol di depan tidak hilang.')
+      }
+      if (!row.name) errors.push('Nama santri wajib diisi.')
+      if (row.idSantri && ids.get(row.idSantri) > 1) {
+        errors.push('ID Santri duplikat di dalam file.')
+      }
+      if (row.nisn && nisns.get(row.nisn) > 1) {
+        errors.push('NISN duplikat di dalam file.')
+      }
+      if (row.idSantri && !existing) {
+        errors.push('ID Santri tidak ditemukan.')
+      }
+      if (
+        row.nisn &&
+        santriAccounts.some(
+          (account) =>
+            String(account.nisn ?? account.username) === row.nisn &&
+            String(account.id) !== row.idSantri,
+        )
+      ) {
+        errors.push('NISN sudah digunakan akun santri lain.')
+      }
+
+      const action = !row.idSantri
+        ? 'new'
+        : existing?.name === row.name &&
+            String(existing.nisn ?? existing.username) === row.nisn
+          ? 'unchanged'
+          : 'update'
+      return {
+        ...row,
+        action,
+        valid: errors.length === 0,
+        errors,
+      }
+    }),
+  }
 }
 
 export const admin = {
@@ -474,24 +521,31 @@ export const admin = {
     await delay()
     const user = requireUser()
     requireRole(user, ['pimpinan'])
-    return {
-      filename: 'template-santri.csv',
-      columns: ['nama', 'nis', 'kelas', 'jenis_kelamin'],
-      rows: [
-        ['Ahmad Fauzi', '20260011', '7A', 'L'],
-        ['Siti Aminah', '20260012', '7B', 'P'],
-      ],
-    }
+    return createSantriWorkbook([])
+  },
+
+  async getSantriExport() {
+    await delay()
+    const user = requireUser()
+    requireRole(user, ['pimpinan'])
+    const rows = accounts
+      .filter((account) => account.role === 'santri')
+      .map((account) => ({
+        idSantri: account.id,
+        nisn: account.nisn ?? account.username,
+        name: account.name,
+      }))
+    return createSantriWorkbook(rows)
   },
 
   async previewImport(file) {
     await delay()
     const user = requireUser()
     requireRole(user, ['pimpinan'])
-    return { rows: simulatePreview(file) }
+    return previewSantriImport(file)
   },
 
-  async importSantri({ acknowledged }) {
+  async importSantri({ file, acknowledged }) {
     await delay(500)
     const user = requireUser()
     requireRole(user, ['pimpinan'])
@@ -500,15 +554,73 @@ export const admin = {
         acknowledged: ['Persetujuan wali santri wajib dicentang.'],
       })
     }
-    const valid = simulatePreview({ name: 'santri.xlsx' }).filter((row) => row.valid)
-    return {
-      imported: valid.length,
-      accounts: valid.map((row, index) => ({
+    const preview = await previewSantriImport(file)
+    const invalidRows = preview.rows.filter((row) => !row.valid)
+    if (invalidRows.length) {
+      fail(422, 'Perbaiki baris yang bermasalah sebelum mengimpor.')
+    }
+
+    let created = 0
+    let updated = 0
+    let unchanged = 0
+    const credentials = new Set(accounts.map((account) => account.password))
+    const importedAccounts = []
+
+    preview.rows.forEach((row) => {
+      if (row.action === 'unchanged') {
+        unchanged += 1
+        return
+      }
+      if (row.action === 'update') {
+        const account = accounts.find(
+          (item) => String(item.id) === row.idSantri && item.role === 'santri',
+        )
+        account.name = row.name
+        account.nisn = row.nisn
+        account.username = row.nisn
+        updated += 1
+        return
+      }
+
+      const bytes = new Uint8Array(12)
+      globalThis.crypto.getRandomValues(bytes)
+      const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789'
+      let temporaryPassword = `Sp${Array.from(
+        bytes,
+        (byte) => alphabet[byte % alphabet.length],
+      ).join('')}!`
+      while (credentials.has(temporaryPassword)) {
+        globalThis.crypto.getRandomValues(bytes)
+        temporaryPassword = `Sp${Array.from(
+          bytes,
+          (byte) => alphabet[byte % alphabet.length],
+        ).join('')}!`
+      }
+      credentials.add(temporaryPassword)
+      const id = Math.max(...accounts.map((account) => account.id)) + 1
+      accounts.push({
+        id,
+        username: row.nisn,
+        nisn: row.nisn,
+        password: temporaryPassword,
         name: row.name,
-        username: row.nis,
         role: 'santri',
-        temporaryPassword: `SP!${202600 + index}`,
-      })),
+        active: true,
+        mustChangePassword: true,
+      })
+      importedAccounts.push({
+        name: row.name,
+        username: row.nisn,
+        temporaryPassword,
+      })
+      created += 1
+    })
+
+    return {
+      created,
+      updated,
+      unchanged,
+      accounts: importedAccounts,
     }
   },
 
