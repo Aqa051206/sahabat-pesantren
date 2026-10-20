@@ -83,6 +83,94 @@ const HEADER_KEYS = {
   nama: 'name',
 }
 
+const IMPORT_HEADERS = [
+  ['Nama', 'name'],
+  ['Email', 'email'],
+  ['NIS', 'nis'],
+  ['Jenis Kelamin', 'jenisKelamin'],
+  ['Telepon Wali', 'teleponOrtu'],
+]
+
+const IMPORT_HEADER_KEYS = {
+  name: 'name',
+  nama: 'name',
+  email: 'email',
+  nis: 'nis',
+  jeniskelamin: 'jenisKelamin',
+  teleponortu: 'teleponOrtu',
+  teleponwali: 'teleponOrtu',
+}
+
+export const createSantriImportWorkbook = async () => {
+  const ExcelJS = await loadExcelJS()
+  const workbook = new ExcelJS.Workbook()
+  const worksheet = workbook.addWorksheet('Santri')
+  worksheet.columns = IMPORT_HEADERS.map(([header, key]) => ({
+    header,
+    key,
+    width: key === 'name' ? 30 : 22,
+  }))
+  worksheet.views = [{ state: 'frozen', ySplit: 1 }]
+  worksheet.autoFilter = {
+    from: 'A1',
+    to: `E${Math.max(1, worksheet.rowCount)}`,
+  }
+  worksheet.getRow(1).font = { bold: true }
+  for (let column = 1; column <= IMPORT_HEADERS.length; column += 1) {
+    worksheet.getRow(1).getCell(column).numFmt = TEXT_FORMAT
+  }
+  const instructions = workbook.addWorksheet('Petunjuk')
+  instructions.addRows([
+    ['Isi semua kolom pada lembar Santri sesuai data santri.'],
+    ['NIS harus disimpan sebagai teks agar angka nol di depan tidak hilang.'],
+    ['Email digunakan untuk komunikasi akun dan harus unik.'],
+  ])
+  instructions.getColumn(1).width = 90
+  const buffer = await workbook.xlsx.writeBuffer()
+  return new Blob([buffer], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  })
+}
+
+export const readSantriImportWorkbook = async (file) => {
+  const ExcelJS = await loadExcelJS()
+  const workbook = new ExcelJS.Workbook()
+  await workbook.xlsx.load(await file.arrayBuffer())
+  const worksheet =
+    workbook.getWorksheet('Santri') ?? workbook.worksheets[0]
+  if (!worksheet) {
+    throw new Error('File Excel tidak memiliki lembar data santri.')
+  }
+
+  const headerMap = new Map()
+  worksheet.getRow(1).eachCell((cell, column) => {
+    const key = IMPORT_HEADER_KEYS[normalizeHeader(cell.value)]
+    if (key) headerMap.set(key, column)
+  })
+  const missingHeaders = IMPORT_HEADERS
+    .map(([, key]) => key)
+    .filter((key) => !headerMap.has(key))
+  if (missingHeaders.length) {
+    throw new Error(
+      'Kolom wajib: Nama, Email, NIS, Jenis Kelamin, dan Telepon Wali.',
+    )
+  }
+
+  const rows = []
+  worksheet.eachRow((row, rowNumber) => {
+    if (rowNumber === 1) return
+    const values = Object.fromEntries(
+      IMPORT_HEADERS.map(([, key]) => [
+        key,
+        cellText(row.getCell(headerMap.get(key)).value),
+      ]),
+    )
+    if (Object.values(values).every((value) => !value)) return
+    rows.push({ index: rowNumber, ...values })
+  })
+  return rows
+}
+
 export const readSantriWorkbook = async (file) => {
   const ExcelJS = await loadExcelJS()
   const workbook = new ExcelJS.Workbook()

@@ -39,6 +39,7 @@ function Input({
   error,
   required = false,
   className,
+  endAdornment,
   ...props
 }) {
   return (
@@ -49,13 +50,22 @@ function Input({
       error={error}
       required={required}
     >
-      <input
-        id={id}
-        aria-invalid={Boolean(error)}
-        aria-describedby={error ? `${id}-error` : undefined}
-        className={cn(baseField, stateField(error), 'h-12', className)}
-        {...props}
-      />
+      <div className="relative">
+        <input
+          id={id}
+          aria-invalid={Boolean(error)}
+          aria-describedby={error ? `${id}-error` : undefined}
+          className={cn(
+            baseField,
+            stateField(error),
+            'h-12',
+            endAdornment ? 'pr-12' : '',
+            className,
+          )}
+          {...props}
+        />
+        {endAdornment}
+      </div>
     </FieldShell>
   )
 }

@@ -1,6 +1,8 @@
 import {
   CheckCircle2,
   Download,
+  Eye,
+  EyeOff,
   FileSpreadsheet,
   Plus,
   Upload,
@@ -16,7 +18,6 @@ import Input from '../../components/ui/Input'
 import Modal from '../../components/ui/Modal'
 import Select from '../../components/ui/Select'
 import Skeleton from '../../components/ui/Skeleton'
-import Switch from '../../components/ui/Switch'
 import { useToast } from '../../components/ui/toast-context'
 import {
   useAccounts,
@@ -27,7 +28,7 @@ import {
   useSetAccountActive,
   useTemplate,
 } from '../../features/accounts/hooks'
-import { downloadBlob, downloadCsv } from '../../lib/csv'
+import { downloadBlob } from '../../lib/csv'
 import { cn } from '../../lib/cn'
 import { MAX_IMPORT_BYTES, ROLE_LABELS, ROLES } from '../../lib/constants'
 
@@ -51,17 +52,53 @@ const CREATE_ROLE_OPTIONS = [
 
 const ACCEPTED_EXT = ['.xlsx']
 
+const makeUsername = (name, role, accounts) => {
+  const base = String(name ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '')
+  if (!base) return ''
+
+  const prefix = role === ROLES.PIMPINAN ? 'pimpinan' : 'pengurus'
+  const stem = `${prefix}.${base}`
+  const taken = new Set(accounts.map((account) => account.username.toLowerCase()))
+  if (!taken.has(stem)) return stem
+
+  let suffix = 2
+  while (taken.has(`${stem}${suffix}`)) suffix += 1
+  return `${stem}${suffix}`
+}
+
 function AccountsTab() {
   const toast = useToast()
   const [filters, setFilters] = useState({ q: '', role: '', active: '' })
-  const deferred = filters
-  const { data, isLoading, isError, refetch } = useAccounts(deferred)
+  const { data, isLoading, isError, refetch } = useAccounts()
   const setActive = useSetAccountActive()
   const createAccount = useCreateAccount()
 
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState({ name: '', username: '', role: '', password: '' })
   const [errors, setErrors] = useState({})
+  const [usernameAuto, setUsernameAuto] = useState(true)
+  const [showPassword, setShowPassword] = useState(false)
+
+  const accounts = data?.items ?? []
+  const searchTerm = filters.q.trim().toLocaleLowerCase('id-ID')
+  const visibleAccounts = accounts.filter((account) => {
+    const matchesSearch =
+      !searchTerm ||
+      String(account.name ?? '')
+        .toLocaleLowerCase('id-ID')
+        .includes(searchTerm) ||
+      String(account.username ?? '')
+        .toLocaleLowerCase('id-ID')
+        .includes(searchTerm)
+    const matchesRole = !filters.role || account.role === filters.role
+    const matchesActive =
+      !filters.active || account.active === (filters.active === 'true')
+    return matchesSearch && matchesRole && matchesActive
+  })
 
   const submit = async (event) => {
     event.preventDefault()
@@ -76,6 +113,8 @@ function AccountsTab() {
       toast.showToast('Akun petugas dibuat.', 'success')
       setOpen(false)
       setForm({ name: '', username: '', role: '', password: '' })
+      setUsernameAuto(true)
+      setShowPassword(false)
     } catch (error) {
       if (error?.status === 422 && error.errors) {
         setErrors(error.errors)
@@ -148,9 +187,9 @@ function AccountsTab() {
         </div>
       ) : isError ? (
         <ErrorState message="Daftar akun gagal dimuat." onRetry={refetch} />
-      ) : data?.items.length ? (
+      ) : visibleAccounts.length ? (
         <ul className="flex flex-col gap-3">
-          {data.items.map((account) => (
+          {visibleAccounts.map((account) => (
             <li key={account.id}>
               <Card className="flex flex-wrap items-center justify-between gap-3 p-4">
                 <div className="flex items-center gap-3">
@@ -234,7 +273,19 @@ function AccountsTab() {
             value={form.name}
             error={errors.name?.[0]}
             onChange={(event) =>
-              setForm((prev) => ({ ...prev, name: event.target.value }))
+              setForm((prev) => ({
+                ...prev,
+                name: event.target.value,
+                ...(usernameAuto
+                  ? {
+                      username: makeUsername(
+                        event.target.value,
+                        prev.role,
+                        accounts,
+                      ),
+                    }
+                  : {}),
+              }))
             }
           />
           <Input
@@ -244,9 +295,11 @@ function AccountsTab() {
             autoComplete="off"
             value={form.username}
             error={errors.username?.[0]}
-            onChange={(event) =>
+            hint="ID dibuat otomatis dari nama dan dapat diedit."
+            onChange={(event) => {
+              setUsernameAuto(false)
               setForm((prev) => ({ ...prev, username: event.target.value }))
-            }
+            }}
           />
           <Select
             id="akun-peran"
@@ -255,17 +308,39 @@ function AccountsTab() {
             options={CREATE_ROLE_OPTIONS}
             value={form.role}
             error={errors.role?.[0]}
-            onChange={(event) =>
-              setForm((prev) => ({ ...prev, role: event.target.value }))
-            }
+            onChange={(event) => {
+              const role = event.target.value
+              setForm((prev) => ({
+                ...prev,
+                role,
+                ...(usernameAuto
+                  ? { username: makeUsername(prev.name, role, accounts) }
+                  : {}),
+              }))
+            }}
           />
           <Input
             id="akun-password"
             label="Kata sandi awal (opsional)"
-            type="password"
+            type={showPassword ? 'text' : 'password'}
             autoComplete="new-password"
             value={form.password}
             error={errors.password?.[0]}
+            endAdornment={
+              <button
+                type="button"
+                aria-label={showPassword ? 'Sembunyikan kata sandi' : 'Lihat kata sandi'}
+                aria-pressed={showPassword}
+                onClick={() => setShowPassword((shown) => !shown)}
+                className="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-r-xl text-body hover:text-navy focus-visible:outline-2 focus-visible:outline-primary"
+              >
+                {showPassword ? (
+                  <EyeOff aria-hidden="true" className="size-5" />
+                ) : (
+                  <Eye aria-hidden="true" className="size-5" />
+                )}
+              </button>
+            }
             onChange={(event) =>
               setForm((prev) => ({ ...prev, password: event.target.value }))
             }
@@ -285,13 +360,11 @@ function ImportTab() {
   const importMut = useImportSantri()
 
   const [file, setFile] = useState(null)
-  const [rows, setRows] = useState(null)
-  const [acknowledged, setAcknowledged] = useState(false)
+  const [previewData, setPreviewData] = useState(null)
   const [result, setResult] = useState(null)
 
   const resetPreview = () => {
-    setRows(null)
-    setAcknowledged(false)
+    setPreviewData(null)
     setResult(null)
   }
 
@@ -311,28 +384,25 @@ function ImportTab() {
     }
     if (selected.size > MAX_IMPORT_BYTES) {
       setFile(null)
-      toast.showToast('Ukuran berkas maksimal 2 MB.', 'error')
+      toast.showToast('Ukuran berkas maksimal 5 MB.', 'error')
       event.target.value = ''
       return
     }
     setFile(selected)
     try {
       const data = await preview.mutateAsync(selected)
-      setRows(data.rows ?? [])
+      setPreviewData(data)
     } catch (error) {
       toast.showToast(error?.message ?? 'Pratinjau gagal dimuat.', 'error')
     }
   }
 
   const doImport = async () => {
-    if (!file || !acknowledged) return
+    if (!file || !previewData?.canImport || invalidCount > 0) return
     try {
-      const data = await importMut.mutateAsync({ file, acknowledged })
+      const data = await importMut.mutateAsync({ file })
       setResult(data)
-      toast.showToast(
-        `Impor selesai: ${data.created} baru, ${data.updated} diperbarui.`,
-        'success',
-      )
+      toast.showToast(`Impor selesai: ${data.created} santri ditambahkan.`, 'success')
     } catch (error) {
       toast.showToast(error?.message ?? 'Impor gagal.', 'error')
     }
@@ -352,22 +422,8 @@ function ImportTab() {
     }
   }
 
-  const downloadCredentials = () => {
-    if (!result?.accounts?.length) return
-    downloadCsv('akun-santri-baru.csv', [
-      ['nama', 'id_pengguna', 'kata_sandi_sementara'],
-      ...result.accounts.map((account) => [
-        account.name,
-        account.username,
-        account.temporaryPassword,
-      ]),
-    ])
-  }
-
+  const rows = previewData?.rows ?? null
   const newCount = rows?.filter((row) => row.action === 'new').length ?? 0
-  const updateCount = rows?.filter((row) => row.action === 'update').length ?? 0
-  const unchangedCount =
-    rows?.filter((row) => row.action === 'unchanged').length ?? 0
   const invalidCount = rows?.filter((row) => !row.valid).length ?? 0
 
   return (
@@ -378,9 +434,9 @@ function ImportTab() {
           Langkah 1 — Siapkan berkas
         </h2>
         <p className="mt-1 text-sm text-body">
-          Unduh data, edit di Excel, lalu unggah kembali. ID Santri dipakai untuk
-          mencocokkan data dan tidak boleh diubah. Baris tanpa ID membuat akun
-          baru; baris yang tidak dicantumkan tidak dihapus. Ukuran maksimal 2 MB.
+          Unduh template Excel, isi data santri, lalu unggah untuk membuat akun
+          baru. Ukuran maksimal 5 MB. Fitur pembaruan data santri yang sudah
+          terdaftar memerlukan dukungan backend.
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <Button
@@ -437,19 +493,22 @@ function ImportTab() {
                 Langkah 2 — Periksa pratinjau
               </h2>
               <span className="text-sm text-body">
-                {newCount} baru · {updateCount} diperbarui · {unchangedCount}{' '}
-                tidak berubah · {invalidCount} bermasalah
+                {newCount} santri · {invalidCount} baris bermasalah
               </span>
             </div>
+            {previewData.message ? (
+              <p className="mt-2 text-sm text-body">{previewData.message}</p>
+            ) : null}
             <div className="mt-4 overflow-x-auto">
-              <table className="w-full min-w-[48rem] border-collapse text-sm">
+              <table className="w-full min-w-[64rem] border-collapse text-sm">
                 <thead>
                   <tr className="text-left text-body">
                     <th className="px-3 py-2 font-semibold">#</th>
-                    <th className="px-3 py-2 font-semibold">ID Santri</th>
-                    <th className="px-3 py-2 font-semibold">NISN</th>
-                    <th className="px-3 py-2 font-semibold">Nama Santri</th>
-                    <th className="px-3 py-2 font-semibold">Perubahan</th>
+                    <th className="px-3 py-2 font-semibold">Nama</th>
+                    <th className="px-3 py-2 font-semibold">Email</th>
+                    <th className="px-3 py-2 font-semibold">NIS</th>
+                    <th className="px-3 py-2 font-semibold">Jenis kelamin</th>
+                    <th className="px-3 py-2 font-semibold">Telepon wali</th>
                     <th className="px-3 py-2 font-semibold">Status</th>
                   </tr>
                 </thead>
@@ -457,15 +516,14 @@ function ImportTab() {
                   {rows.map((row) => (
                     <tr key={row.index} className="border-t border-border">
                       <td className="px-3 py-2 text-body">{row.index}</td>
-                      <td className="px-3 py-2 text-navy">{row.idSantri || 'Baru'}</td>
-                      <td className="px-3 py-2 text-navy">{row.nisn || '—'}</td>
                       <td className="px-3 py-2 text-navy">{row.name || '—'}</td>
+                      <td className="px-3 py-2 text-navy">{row.email || '—'}</td>
+                      <td className="px-3 py-2 text-navy">{row.nis || '—'}</td>
                       <td className="px-3 py-2 text-navy">
-                        {row.action === 'new'
-                          ? 'Santri baru'
-                          : row.action === 'update'
-                            ? 'Perbarui data'
-                            : 'Tidak berubah'}
+                        {row.jenisKelamin || '—'}
+                      </td>
+                      <td className="px-3 py-2 text-navy">
+                        {row.teleponOrtu || '—'}
                       </td>
                       <td className="px-3 py-2">
                         {row.valid ? (
@@ -489,25 +547,27 @@ function ImportTab() {
 
           <Card className="p-5">
             <h2 className="text-lg font-semibold text-navy">
-              Langkah 3 — Konfirmasi &amp; impor
+              Langkah 3 — Impor data
             </h2>
-            <div className="mt-3">
-              <Switch
-                id="import-ack"
-                label="Wali santri sudah memberikan persetujuan"
-                description="Impor hanya boleh dilakukan dengan persetujuan wali santri."
-                checked={acknowledged}
-                onChange={setAcknowledged}
-              />
-            </div>
+            {!previewData.canImport ? (
+              <p className="mt-2 text-sm text-danger">
+                Server belum mengizinkan impor. Periksa error di atas atau hubungi
+                pengelola backend.
+              </p>
+            ) : null}
             <div className="mt-4 flex justify-end">
               <Button
                 onClick={doImport}
                 loading={importMut.isPending}
-                disabled={!file || !rows?.length || !acknowledged || invalidCount > 0}
+                disabled={
+                  !file ||
+                  !rows?.length ||
+                  !previewData.canImport ||
+                  invalidCount > 0
+                }
               >
                 <Upload aria-hidden="true" className="size-4" />
-                Terapkan {newCount + updateCount} perubahan
+                Impor {newCount} santri
               </Button>
             </div>
           </Card>
@@ -521,46 +581,9 @@ function ImportTab() {
             Impor selesai
           </h2>
           <p className="mt-1 text-sm text-body">
-            {result.created} akun baru dibuat, {result.updated} data diperbarui,
-            dan {result.unchanged} tidak berubah. Baris yang tidak tercantum
-            tidak dihapus atau dinonaktifkan.
+            {result.created} akun santri berhasil ditambahkan.{' '}
+            {result.message || 'Santri wajib mengganti kata sandi sementara saat login pertama.'}
           </p>
-          {result.accounts.length ? (
-            <>
-              <div className="mt-4 overflow-x-auto">
-                <table className="w-full min-w-[28rem] border-collapse text-sm">
-                  <thead>
-                    <tr className="text-left text-body">
-                      <th className="px-3 py-2 font-semibold">Nama</th>
-                      <th className="px-3 py-2 font-semibold">ID pengguna</th>
-                      <th className="px-3 py-2 font-semibold">Kata sandi sementara</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {result.accounts.map((account) => (
-                      <tr key={account.username} className="border-t border-border">
-                        <td className="px-3 py-2 text-navy">{account.name}</td>
-                        <td className="px-3 py-2 text-navy">{account.username}</td>
-                        <td className="px-3 py-2 font-mono text-navy">
-                          {account.temporaryPassword}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <div className="mt-4 flex justify-end">
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={downloadCredentials}
-                >
-                  <Download aria-hidden="true" className="size-4" />
-                  Unduh daftar akun
-                </Button>
-              </div>
-            </>
-          ) : null}
         </Card>
       ) : null}
     </div>

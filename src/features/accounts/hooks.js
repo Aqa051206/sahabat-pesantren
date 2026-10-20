@@ -5,10 +5,10 @@ import { reportKeys } from '../reports/queryKeys'
 const retryUnlessClientError = (count, error) =>
   error?.status >= 500 && count < 1
 
-export const useAccounts = (filters) =>
+export const useAccounts = () =>
   useQuery({
-    queryKey: reportKeys.accounts(filters),
-    queryFn: () => api.admin.getAccounts(filters),
+    queryKey: reportKeys.accounts(),
+    queryFn: () => api.admin.getAccounts(),
     retry: retryUnlessClientError,
     placeholderData: (previous) => previous,
   })

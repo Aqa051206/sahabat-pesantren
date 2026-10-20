@@ -14,7 +14,8 @@ import {
 } from '../../lib/constants'
 import {
   createSantriWorkbook,
-  readSantriWorkbook,
+  createSantriImportWorkbook,
+  readSantriImportWorkbook,
 } from '../../lib/santriWorkbook'
 import { clearSession, emitSessionExpired, getToken } from '../../lib/session'
 import {
@@ -418,7 +419,7 @@ export const messages = {
 }
 
 export const notes = {
-  async addNote(id, body) {
+  async addNote(id, { body } = {}) {
     await delay()
     const user = requireUser()
     requireRole(user, ['pengurus', 'pimpinan'])
@@ -458,61 +459,51 @@ export const dashboard = {
 }
 
 const previewSantriImport = async (file) => {
-  const uploadedRows = await readSantriWorkbook(file)
-  const ids = new Map()
-  const nisns = new Map()
-
+  const uploadedRows = await readSantriImportWorkbook(file)
+  const emails = new Map()
+  const nisValues = new Map()
   uploadedRows.forEach((row) => {
-    if (row.idSantri) ids.set(row.idSantri, (ids.get(row.idSantri) ?? 0) + 1)
-    if (row.nisn) nisns.set(row.nisn, (nisns.get(row.nisn) ?? 0) + 1)
+    const email = row.email.toLowerCase()
+    if (email) emails.set(email, (emails.get(email) ?? 0) + 1)
+    if (row.nis) nisValues.set(row.nis, (nisValues.get(row.nis) ?? 0) + 1)
   })
 
   const santriAccounts = accounts.filter((account) => account.role === 'santri')
+  const rows = uploadedRows.map((row) => {
+    const errors = []
+    if (!row.name) errors.push('Nama wajib diisi.')
+    if (!row.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(row.email)) {
+      errors.push('Email tidak valid.')
+    }
+    if (!row.nis) errors.push('NIS wajib diisi.')
+    if (!['laki', 'perempuan'].includes(row.jenisKelamin.toLowerCase())) {
+      errors.push('Jenis kelamin harus laki atau perempuan.')
+    }
+    if (!row.teleponOrtu) errors.push('Telepon wali wajib diisi.')
+    if (emails.get(row.email.toLowerCase()) > 1) {
+      errors.push('Email duplikat di dalam file.')
+    }
+    if (nisValues.get(row.nis) > 1) errors.push('NIS duplikat di dalam file.')
+    if (
+      santriAccounts.some(
+        (account) =>
+          account.email?.toLowerCase() === row.email.toLowerCase() ||
+          account.username === row.nis,
+      )
+    ) {
+      errors.push('Email atau NIS sudah digunakan akun santri lain.')
+    }
+    return {
+      ...row,
+      action: 'new',
+      valid: errors.length === 0,
+      errors,
+    }
+  })
   return {
-    rows: uploadedRows.map((row) => {
-      const errors = []
-      const existing = row.idSantri
-        ? santriAccounts.find((account) => String(account.id) === row.idSantri)
-        : null
-
-      if (!row.nisn) errors.push('NISN wajib diisi.')
-      else if (!row.nisnIsText) {
-        errors.push('NISN harus berformat teks agar angka nol di depan tidak hilang.')
-      }
-      if (!row.name) errors.push('Nama santri wajib diisi.')
-      if (row.idSantri && ids.get(row.idSantri) > 1) {
-        errors.push('ID Santri duplikat di dalam file.')
-      }
-      if (row.nisn && nisns.get(row.nisn) > 1) {
-        errors.push('NISN duplikat di dalam file.')
-      }
-      if (row.idSantri && !existing) {
-        errors.push('ID Santri tidak ditemukan.')
-      }
-      if (
-        row.nisn &&
-        santriAccounts.some(
-          (account) =>
-            String(account.nisn ?? account.username) === row.nisn &&
-            String(account.id) !== row.idSantri,
-        )
-      ) {
-        errors.push('NISN sudah digunakan akun santri lain.')
-      }
-
-      const action = !row.idSantri
-        ? 'new'
-        : existing?.name === row.name &&
-            String(existing.nisn ?? existing.username) === row.nisn
-          ? 'unchanged'
-          : 'update'
-      return {
-        ...row,
-        action,
-        valid: errors.length === 0,
-        errors,
-      }
-    }),
+    rows,
+    canImport: rows.length > 0 && rows.every((row) => row.valid),
+    message: 'Periksa data santri sebelum mengimpor.',
   }
 }
 
@@ -521,7 +512,7 @@ export const admin = {
     await delay()
     const user = requireUser()
     requireRole(user, ['pimpinan'])
-    return createSantriWorkbook([])
+    return createSantriImportWorkbook()
   },
 
   async getSantriExport() {
@@ -542,85 +533,70 @@ export const admin = {
     await delay()
     const user = requireUser()
     requireRole(user, ['pimpinan'])
-    return previewSantriImport(file)
+    const result = await previewSantriImport(file)
+    return {
+      rows: result.rows.map((row) => ({
+        index: row.index,
+        name: row.name,
+        email: row.email,
+        nis: row.nis,
+        jenisKelamin: row.jenisKelamin,
+        teleponOrtu: row.teleponOrtu,
+        action: row.action,
+        valid: row.valid,
+        errors: row.errors,
+      })),
+      canImport: result.canImport,
+      message: result.message,
+    }
   },
 
-  async importSantri({ file, acknowledged }) {
+  async importSantri({ file }) {
     await delay(500)
     const user = requireUser()
     requireRole(user, ['pimpinan'])
-    if (!acknowledged) {
-      fail(422, 'Persetujuan wali santri wajib dicentang.', {
-        acknowledged: ['Persetujuan wali santri wajib dicentang.'],
-      })
-    }
     const preview = await previewSantriImport(file)
-    const invalidRows = preview.rows.filter((row) => !row.valid)
-    if (invalidRows.length) {
+    if (!preview.canImport) {
       fail(422, 'Perbaiki baris yang bermasalah sebelum mengimpor.')
     }
 
-    let created = 0
-    let updated = 0
-    let unchanged = 0
     const credentials = new Set(accounts.map((account) => account.password))
-    const importedAccounts = []
-
     preview.rows.forEach((row) => {
-      if (row.action === 'unchanged') {
-        unchanged += 1
-        return
-      }
-      if (row.action === 'update') {
-        const account = accounts.find(
-          (item) => String(item.id) === row.idSantri && item.role === 'santri',
-        )
-        account.name = row.name
-        account.nisn = row.nisn
-        account.username = row.nisn
-        updated += 1
-        return
-      }
-
       const bytes = new Uint8Array(12)
       globalThis.crypto.getRandomValues(bytes)
       const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789'
-      let temporaryPassword = `Sp${Array.from(
+      let password = `Sp${Array.from(
         bytes,
         (byte) => alphabet[byte % alphabet.length],
       ).join('')}!`
-      while (credentials.has(temporaryPassword)) {
+      while (credentials.has(password)) {
         globalThis.crypto.getRandomValues(bytes)
-        temporaryPassword = `Sp${Array.from(
+        password = `Sp${Array.from(
           bytes,
           (byte) => alphabet[byte % alphabet.length],
         ).join('')}!`
       }
-      credentials.add(temporaryPassword)
+      credentials.add(password)
       const id = Math.max(...accounts.map((account) => account.id)) + 1
       accounts.push({
         id,
-        username: row.nisn,
-        nisn: row.nisn,
-        password: temporaryPassword,
+        username: row.nis,
+        nisn: row.nis,
+        email: row.email,
+        password,
         name: row.name,
         role: 'santri',
         active: true,
         mustChangePassword: true,
       })
-      importedAccounts.push({
-        name: row.name,
-        username: row.nisn,
-        temporaryPassword,
-      })
-      created += 1
     })
 
     return {
-      created,
-      updated,
-      unchanged,
-      accounts: importedAccounts,
+      created: preview.rows.length,
+      updated: 0,
+      unchanged: 0,
+      message:
+        'Data santri berhasil diimpor. Santri wajib mengganti kata sandi sementara saat login pertama.',
     }
   },
 

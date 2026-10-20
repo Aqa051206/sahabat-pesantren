@@ -53,12 +53,12 @@ masuk pertama kali.
 
 ## Pembaruan data santri
 
-Pimpinan dapat mengunduh data santri sebagai Excel `.xlsx`, mengedit kolom
-NISN/nama, lalu mengunggah file itu kembali dari halaman Kelola Akun. Kolom ID
-Santri adalah kunci pencocokan sistem dan tidak boleh diubah. Baris dengan ID
-kosong membuat akun baru; baris yang tidak ada di file tidak dihapus atau
-dinonaktifkan. Akun baru mendapat sandi sementara unik dan wajib menggantinya
-saat login pertama. Ekspor data tidak memuat sandi.
+Pimpinan dapat mengunduh template Excel `.xlsx` dari halaman Kelola Akun,
+mengisi data yang diwajibkan backend (`name`, `email`, `nis`, `jenis_kelamin`,
+`telepon_ortu`), lalu melihat pratinjau dan mengimpor akun baru. Backend
+membatasi ukuran unggahan hingga 5 MB. Ekspor daftar santri dan pembaruan data
+santri yang sudah terdaftar belum didukung oleh kontrak API saat ini; lihat
+`API_ASSUMPTIONS.md`.
 
 ## Checklist sebelum deploy produksi
 

@@ -107,9 +107,16 @@ export const useAnswerIdentityRequest = (id) => {
 export const useAddNote = (id) => {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (body) => api.notes.addNote(id, body),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: reportKeys.detail(id) })
+    mutationFn: (payload) => api.notes.addNote(id, payload),
+    onSuccess: (note) => {
+      queryClient.setQueryData(reportKeys.detail(id), (report) =>
+        report
+          ? {
+              ...report,
+              catatan: [...report.catatan, note],
+            }
+          : report,
+      )
     },
   })
 }

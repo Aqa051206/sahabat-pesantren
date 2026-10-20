@@ -47,8 +47,7 @@ disebutkan tetap merupakan asumsi sampai dikonfirmasi tim backend.
 ⚠️ Asumsi request: membuat laporan `{ kategori, isi, tampilkan_identitas }`;
   server menentukan `users_id`, `no_laporan`, `status`, dan `waktu`.
   Memperbarui identitas `{ tampilkan_identitas }`;
-  memperbarui status `{ status }`; eskalasi `{ tujuan, catatan }`; catatan
-  internal `{ body }`.
+  memperbarui status `{ status }`; eskalasi `{ tujuan, catatan }`.
 ⚠️ Daftar laporan santri dan petugas mengambil semua halaman API memakai
 `?page=` lalu menerapkan filter status, kategori, dan kode laporan serta
 pagination di frontend. Respons paginator diharapkan menyediakan `last_page`
@@ -83,7 +82,16 @@ hanya menggunakannya bila API memang mengirimkannya:
   `disetujui` atau `ditolak`; frontend menormalkan `true`/`1` menjadi
   `disetujui` dan `false`/`0` menjadi `ditolak`.
 - `catatan_internal` — array `{ id, body, author_name, created_at }`, hanya
-  dikembalikan untuk staff.
+  dikembalikan untuk staff. Backend yang didokumentasikan menerima catatan
+  melalui `POST /reports/{laporan}/notes` dengan body `{ catatan }`; respons
+  `Catatan` berisi `id`, `catatan`, `users_id`, dan timestamps, tetapi detail
+  laporan belum mendokumentasikan daftar catatan maupun nama pengirim.
+
+Frontend mengirim field `catatan` dan menampilkan nama petugas yang sedang
+menulis pada respons saat ini. Agar catatan tetap muncul setelah logout/login
+dan nama penulis tersedia, backend perlu mengembalikan `catatan_internal` pada
+`GET /reports/{laporan}` dengan data catatan tersimpan dan relasi
+`user.name`/`author_name`. Catatan sensitif tidak disimpan di localStorage.
 
 Permintaan izin memakai multipart dengan `alasan` wajib dan `bukti` opsional;
 frontend tidak mengirim field `bukti` bila berkas tidak dipilih. Bukti yang
@@ -111,38 +119,39 @@ dengan menambahkan prefix `/api` ke origin.
 
 ### Kontrak backend saat ini (dokumentasi `/docs/api`)
 
-- ✅ `GET /api/admin/santri/template` — respons berkas XLSX.
+- ✅ `GET /api/admin/santri/template` — respons berkas XLSX dengan kolom
+  `name`, `email`, `nis`, `jenis_kelamin`, dan `telepon_ortu`.
 - ✅ `POST /api/admin/santri/import` — multipart dengan field `action`
   (`preview` atau `import`) dan `file`.
 - ✅ `GET /api/santri` — daftar `{ santri: [...], message }`; dokumentasi
   menggunakan schema `User` (id, name, email, role, status), bukan NISN.
 - ⚠️ Tidak ada `GET /api/admin/santri/export` pada dokumentasi yang diperiksa.
 
-Kontrak impor yang terdokumentasi meminta kolom `name`, `email`, `nis`,
-`jenis_kelamin`, dan `telepon_ortu`. Preview mengembalikan `data`, `errors`,
-`can_import`, dan `message`; impor final mengembalikan `imported` dan `message`.
-Kontrak ini belum memuat `ID Santri` sebagai kunci update, NISN, klasifikasi
-baris `new/update/unchanged`, maupun daftar sandi sementara unik. Sementara itu,
-frontend pembaruan santri saat ini mengharapkan file dengan kolom `ID Santri`,
-`NISN`, `Nama Santri`, preview menggunakan baris dengan `action` dan `valid`,
-serta hasil impor berisi jumlah dibuat/diperbarui/tidak berubah dan kredensial
-akun baru.
+Untuk preview, kirim `action=preview`. Respons berisi `data` (baris dengan
+`row`, `name`, `email`, `nis`, `jenis_kelamin`, `telepon_ortu`, `valid`),
+`errors`, `can_import`, dan `message`. Untuk impor final, kirim
+`action=import`; respons berisi `imported` dan `message`. Batas file yang
+terdokumentasi 5120 KB. Frontend mengikuti format dan batas tersebut.
 
-Jadi dokumentasi backend saat ini **belum cocok** dengan alur unduh → edit →
-unggah yang diminta. Jangan sekadar mengganti prefix atau memetakan `nis` ke
-`NISN`: perlu konfirmasi/penyesuaian kontrak backend untuk route ekspor serta
-semantik impor pembaruan yang mempertahankan akun yang tidak tercantum.
-Ekspor hanya boleh berisi ID Santri, NISN, dan nama; akses ekspor/impor harus
-dibatasi untuk pimpinan.
+Kontrak ini membuat akun baru; belum mendukung pembaruan berdasarkan ID Santri
+atau ekspor XLSX. `GET /api/santri` juga belum mendokumentasikan NIS. Alur
+unduh → edit → unggah untuk memperbarui data santri yang sudah ada tetap
+memerlukan kontrak/endpoint backend tambahan. Jangan menghapus baris yang
+hilang atau menyamakan `nis` dengan NISN tanpa konfirmasi backend.
 
 ## Akun petugas — ⚠️ DIASUMSIKAN SELURUHNYA
 
-Belum ada di kontrak beku. F-17 menyebut pimpinan membuat dan menonaktifkan
-akun, tetapi endpoint kelola akun belum tercantum di kontrak. Frontend memakai:
+Dokumentasi backend saat ini menyediakan `GET /api/admin/accounts` dan
+`PATCH /api/admin/accounts/{user}/status`. Respons daftar berupa
+`{ data: [User], message }`; frontend memetakan `email` sebagai ID pengguna dan
+`is_active` sebagai status aktif. Pencarian dan filter dilakukan lokal di UI.
 
-- ⚠️ `GET /api/v1/admin/accounts` — `?q=&role=&active=` → `{ data: [...], meta }`
-- ⚠️ `POST /api/v1/admin/accounts` — `{ name, username, role, password? }`
-- ⚠️ `PATCH /api/v1/admin/accounts/{id}/status` — `{ active }`
+Belum ada endpoint pembuatan akun di dokumentasi. Frontend masih memakai
+asumsi berikut, sehingga pembuatan akun petugas produksi perlu dikonfirmasi:
+
+- ⚠️ `POST /api/admin/accounts` — `{ name, username, role, password? }`
+- ⚠️ `PATCH /api/admin/accounts/{user}/status` — route dan respons
+  didokumentasikan, tetapi request body belum didokumentasikan.
 
 Field akun: `{ id, username, name, role, active, must_change_password }`.
 Jika backend memakai jalur/bentuk lain, sesuaikan di `src/api/services/admin.js`

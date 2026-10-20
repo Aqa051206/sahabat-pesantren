@@ -15,14 +15,20 @@ export const adaptMessage = (raw) => ({
   id: raw.id,
   body: raw.body,
   from: raw.from,
-  senderName: raw.sender_name ?? null,
+  senderName:
+    raw.sender_name ?? raw.pengirim?.name ?? raw.user?.name ?? null,
   createdAt: raw.created_at ?? null,
 })
 
 export const adaptNote = (raw) => ({
   id: raw.id,
-  body: raw.body,
-  authorName: raw.author_name ?? null,
+  body: raw.body ?? raw.catatan ?? '',
+  authorName:
+    raw.author_name ??
+    raw.user?.name ??
+    raw.author?.name ??
+    raw.pengirim?.name ??
+    null,
   createdAt: raw.created_at ?? null,
 })
 
@@ -64,19 +70,22 @@ export const adaptReport = (raw) =>
         pelaporNama: raw.pelapor_nama ?? raw.user?.name ?? null,
         perluKlarifikasi: Boolean(raw.perlu_klarifikasi),
         permintaanIdentitas: adaptIdentityRequest(raw.permintaan_identitas),
-        catatan: Array.isArray(raw.catatan_internal)
-          ? raw.catatan_internal.map(adaptNote)
+        catatan: Array.isArray(raw.catatan_internal ?? raw.catatan)
+          ? (raw.catatan_internal ?? raw.catatan).map(adaptNote)
           : [],
       }
     : null
 
+const adaptBoolean = (value) =>
+  value === true || value === 1 || value === '1' || value === 'true'
+
 export const adaptAccount = (raw) => ({
   id: raw.id,
-  username: raw.username,
+  username: raw.username ?? raw.email ?? raw.nis ?? '',
   name: raw.name,
   role: raw.role,
-  active: Boolean(raw.active),
-  mustChangePassword: Boolean(raw.must_change_password),
+  active: adaptBoolean(raw.active ?? raw.is_active),
+  mustChangePassword: adaptBoolean(raw.must_change_password),
 })
 
 export const adaptPagination = (meta, itemCount = 0) => {

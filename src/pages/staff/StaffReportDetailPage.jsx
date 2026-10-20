@@ -137,7 +137,10 @@ export default function StaffReportDetailPage() {
     event.preventDefault()
     if (!noteBody.trim()) return
     try {
-      await addNote.mutateAsync(noteBody.trim())
+      await addNote.mutateAsync({
+        body: noteBody.trim(),
+        authorName: user?.name,
+      })
       setNoteBody('')
       toast.showToast('Catatan internal ditambahkan.', 'success')
     } catch (mutationError) {
@@ -250,7 +253,7 @@ export default function StaffReportDetailPage() {
               >
                 <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-body">
                   <span className="font-semibold text-primary">
-                    {note.authorName ?? 'Petugas'}
+                    {note.authorName ?? 'Nama pengirim tidak tersedia dari API'}
                   </span>
                   <span>{formatDateOnly(note.createdAt)}</span>
                 </div>
