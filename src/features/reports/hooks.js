@@ -104,10 +104,13 @@ export const useAnswerIdentityRequest = (id) => {
   })
 }
 
-export const useAddNote = (id) => {
+export const useAddNote = (id, authorName) => {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (body) => api.notes.addNote(id, body),
+    mutationFn: async (body) => {
+      const note = await api.notes.addNote(id, body)
+      return { ...note, authorName: note.authorName ?? authorName ?? null }
+    },
     onSuccess: (note) => {
       queryClient.setQueryData(reportKeys.detail(id), (report) => {
         if (!report) return report

@@ -34,9 +34,27 @@ export const getAccounts = async ({ q, role, active } = {}) => {
       ...(active === undefined || active === '' ? {} : { active }),
     },
   })
+  const body = data ?? {}
+  const payload = body.data
+  const items = Array.isArray(payload)
+    ? payload
+    : Array.isArray(payload?.data)
+      ? payload.data
+      : Array.isArray(payload?.items)
+        ? payload.items
+        : Array.isArray(body.items)
+          ? body.items
+          : []
+  const meta =
+    payload?.meta ??
+    payload?.pagination ??
+    body.meta ??
+    body.pagination ??
+    payload ??
+    body
   return {
-    items: (data.data ?? []).map(adaptAccount),
-    meta: adaptPagination(data.meta),
+    items: items.map(adaptAccount),
+    meta: adaptPagination(meta, items.length),
   }
 }
 

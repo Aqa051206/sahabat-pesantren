@@ -2,6 +2,8 @@ import {
   CheckCircle2,
   Download,
   FileSpreadsheet,
+  Eye,
+  EyeOff,
   Plus,
   Upload,
   UserPlus,
@@ -30,36 +32,39 @@ import { downloadCsv } from '../../lib/csv'
 import { cn } from '../../lib/cn'
 import { MAX_IMPORT_BYTES, ROLE_LABELS, ROLES } from '../../lib/constants'
 
-const ROLE_OPTIONS = [
-  { value: '', label: 'Semua peran' },
-  { value: ROLES.PENGURUS, label: ROLE_LABELS[ROLES.PENGURUS] },
-  { value: ROLES.PIMPINAN, label: ROLE_LABELS[ROLES.PIMPINAN] },
-]
-
 const ACTIVE_OPTIONS = [
   { value: '', label: 'Semua status' },
   { value: 'true', label: 'Aktif' },
   { value: 'false', label: 'Nonaktif' },
 ]
 
-const CREATE_ROLE_OPTIONS = [
-  { value: '', label: 'Pilih peran' },
-  { value: ROLES.PENGURUS, label: ROLE_LABELS[ROLES.PENGURUS] },
-  { value: ROLES.PIMPINAN, label: ROLE_LABELS[ROLES.PIMPINAN] },
-]
-
 const ACCEPTED_EXT = ['.csv', '.xlsx', '.xls']
 
-function AccountsTab() {
+function AccountsTab({ role }) {
   const toast = useToast()
-  const [filters, setFilters] = useState({ q: '', role: '', active: '' })
+  const [filters, setFilters] = useState({ q: '', active: '' })
   const deferred = filters
-  const { data, isLoading, isError, refetch } = useAccounts(deferred)
+  const { data, isLoading, isError, refetch } = useAccounts({
+    ...deferred,
+    role,
+  })
+  const visibleAccounts = (data?.items ?? []).filter((account) => {
+    const query = filters.q.trim().toLocaleLowerCase()
+    const matchesQuery =
+      !query ||
+      [account.name, account.username]
+        .filter(Boolean)
+        .some((value) => String(value).toLocaleLowerCase().includes(query))
+    const matchesActive =
+      filters.active === '' || account.active === (filters.active === 'true')
+    return account.role === role && matchesQuery && matchesActive
+  })
   const setActive = useSetAccountActive()
   const createAccount = useCreateAccount()
 
   const [open, setOpen] = useState(false)
-  const [form, setForm] = useState({ name: '', username: '', role: '', password: '' })
+  const [showPassword, setShowPassword] = useState(false)
+  const [form, setForm] = useState({ name: '', email: '', password: '' })
   const [errors, setErrors] = useState({})
 
   const submit = async (event) => {
@@ -68,13 +73,13 @@ function AccountsTab() {
     try {
       await createAccount.mutateAsync({
         name: form.name,
-        username: form.username,
-        role: form.role,
-        password: form.password || undefined,
+        email: form.email,
+        password: form.password,
       })
-      toast.showToast('Akun petugas dibuat.', 'success')
+      toast.showToast(`Akun ${ROLE_LABELS[role].toLowerCase()} dibuat.`, 'success')
       setOpen(false)
-      setForm({ name: '', username: '', role: '', password: '' })
+      setShowPassword(false)
+      setForm({ name: '', email: '', password: '' })
     } catch (error) {
       if (error?.status === 422 && error.errors) {
         setErrors(error.errors)
@@ -102,24 +107,17 @@ function AccountsTab() {
   return (
     <div className="flex flex-col gap-4">
       <Card className="p-4">
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2">
           <Input
-            id="akun-cari"
+            id={`akun-cari-${role}`}
             label="Cari"
-            placeholder="Nama atau ID pengguna"
+            placeholder={
+              role === ROLES.SANTRI ? 'Nama atau NIS' : 'Nama atau email'
+            }
             autoComplete="off"
             value={filters.q}
             onChange={(event) =>
               setFilters((prev) => ({ ...prev, q: event.target.value }))
-            }
-          />
-          <Select
-            id="akun-role"
-            label="Peran"
-            options={ROLE_OPTIONS}
-            value={filters.role}
-            onChange={(event) =>
-              setFilters((prev) => ({ ...prev, role: event.target.value }))
             }
           />
           <Select
@@ -132,12 +130,14 @@ function AccountsTab() {
             }
           />
         </div>
-        <div className="mt-4 flex justify-end">
-          <Button size="sm" onClick={() => setOpen(true)}>
-            <Plus aria-hidden="true" className="size-4" />
-            Tambah akun
-          </Button>
-        </div>
+        {role === ROLES.PENGURUS ? (
+          <div className="mt-4 flex justify-end">
+            <Button size="sm" onClick={() => setOpen(true)}>
+              <Plus aria-hidden="true" className="size-4" />
+              Tambah akun pengurus
+            </Button>
+          </div>
+        ) : null}
       </Card>
 
       {isLoading ? (
@@ -147,9 +147,9 @@ function AccountsTab() {
         </div>
       ) : isError ? (
         <ErrorState message="Daftar akun gagal dimuat." onRetry={refetch} />
-      ) : data?.items.length ? (
+      ) : visibleAccounts.length ? (
         <ul className="flex flex-col gap-3">
-          {data.items.map((account) => (
+          {visibleAccounts.map((account) => (
             <li key={account.id}>
               <Card className="flex flex-wrap items-center justify-between gap-3 p-4">
                 <div className="flex items-center gap-3">
@@ -159,7 +159,11 @@ function AccountsTab() {
                   <div>
                     <p className="font-semibold text-navy">{account.name}</p>
                     <p className="text-sm text-body">
-                      {account.username} · {ROLE_LABELS[account.role] ?? account.role}
+                      {account.username
+                        ? role === ROLES.SANTRI
+                          ? `NIS: ${account.username}`
+                          : account.username
+                        : 'Identitas belum tersedia'}
                     </p>
                   </div>
                 </div>
@@ -201,7 +205,7 @@ function AccountsTab() {
       <Modal
         open={open}
         onClose={() => setOpen(false)}
-        title="Tambah akun petugas"
+        title={`Tambah akun ${ROLE_LABELS[role].toLowerCase()}`}
         footer={
           <>
             <Button variant="ghost" onClick={() => setOpen(false)}>
@@ -223,13 +227,13 @@ function AccountsTab() {
           onSubmit={submit}
           className="flex flex-col gap-4"
           autoComplete="off"
-          noValidate
         >
           <Input
             id="akun-nama"
             label="Nama lengkap"
             required
             autoComplete="off"
+            maxLength={255}
             value={form.name}
             error={errors.name?.[0]}
             onChange={(event) =>
@@ -237,38 +241,51 @@ function AccountsTab() {
             }
           />
           <Input
-            id="akun-username"
-            label="ID pengguna"
+            id="akun-email"
+            label="Email"
+            type="email"
             required
-            autoComplete="off"
-            value={form.username}
-            error={errors.username?.[0]}
+            autoComplete="email"
+            maxLength={255}
+            value={form.email}
+            error={errors.email?.[0]}
             onChange={(event) =>
-              setForm((prev) => ({ ...prev, username: event.target.value }))
+              setForm((prev) => ({ ...prev, email: event.target.value }))
             }
           />
-          <Select
-            id="akun-peran"
-            label="Peran"
-            required
-            options={CREATE_ROLE_OPTIONS}
-            value={form.role}
-            error={errors.role?.[0]}
-            onChange={(event) =>
-              setForm((prev) => ({ ...prev, role: event.target.value }))
-            }
-          />
-          <Input
-            id="akun-password"
-            label="Kata sandi awal (opsional)"
-            type="password"
-            autoComplete="new-password"
-            value={form.password}
-            error={errors.password?.[0]}
-            onChange={(event) =>
-              setForm((prev) => ({ ...prev, password: event.target.value }))
-            }
-          />
+          <div className="relative">
+            <Input
+              id="akun-password"
+              label="Kata sandi awal"
+              type={showPassword ? 'text' : 'password'}
+              autoComplete="new-password"
+              required
+              minLength={8}
+              maxLength={255}
+              hint="Minimal 8 karakter."
+              value={form.password}
+              error={errors.password?.[0]}
+              className="pr-12"
+              onChange={(event) =>
+                setForm((prev) => ({ ...prev, password: event.target.value }))
+              }
+            />
+            <button
+              type="button"
+              aria-label={
+                showPassword ? 'Sembunyikan kata sandi' : 'Lihat kata sandi'
+              }
+              aria-pressed={showPassword}
+              onClick={() => setShowPassword((visible) => !visible)}
+              className="absolute right-2 top-8 flex size-10 items-center justify-center rounded-lg text-body hover:bg-band-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              {showPassword ? (
+                <EyeOff aria-hidden="true" className="size-5" />
+              ) : (
+                <Eye aria-hidden="true" className="size-5" />
+              )}
+            </button>
+          </div>
         </form>
       </Modal>
     </div>
@@ -516,10 +533,11 @@ function ImportTab() {
 }
 
 export default function AccountsPage() {
-  const [tab, setTab] = useState('accounts')
+  const [tab, setTab] = useState('pengurus')
 
   const tabs = [
-    { value: 'accounts', label: 'Akun Petugas' },
+    { value: 'pengurus', label: 'Akun Pengurus' },
+    { value: 'santri', label: 'Akun Santri' },
     { value: 'import', label: 'Impor Santri' },
   ]
 
@@ -556,7 +574,13 @@ export default function AccountsPage() {
         ))}
       </div>
 
-      {tab === 'accounts' ? <AccountsTab /> : <ImportTab />}
+      {tab === 'pengurus' ? (
+        <AccountsTab role={ROLES.PENGURUS} />
+      ) : tab === 'santri' ? (
+        <AccountsTab role={ROLES.SANTRI} />
+      ) : (
+        <ImportTab />
+      )}
     </div>
   )
 }

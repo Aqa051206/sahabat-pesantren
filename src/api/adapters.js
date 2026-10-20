@@ -7,7 +7,8 @@ export const adaptUser = (raw) =>
         id: raw.id,
         name: raw.name,
         role: raw.role,
-        mustChangePassword: Boolean(raw.must_change_password),
+        mustChangePassword:
+          raw.role === 'pengurus' ? false : Boolean(raw.must_change_password),
       }
     : null
 
@@ -23,7 +24,13 @@ export const adaptMessage = (raw) => ({
 export const adaptNote = (raw) => ({
   id: raw.id,
   body: raw.catatan ?? raw.body,
-  authorName: raw.author_name ?? null,
+  authorName:
+    raw.author_name ??
+    raw.user?.name ??
+    raw.pengirim?.name ??
+    raw.users?.name ??
+    raw.author?.name ??
+    null,
   createdAt: raw.created_at ?? null,
 })
 
@@ -65,20 +72,37 @@ export const adaptReport = (raw) =>
         pelaporNama: raw.pelapor_nama ?? raw.user?.name ?? null,
         perluKlarifikasi: Boolean(raw.perlu_klarifikasi),
         permintaanIdentitas: adaptIdentityRequest(raw.permintaan_identitas),
-        catatan: Array.isArray(raw.catatan_internal)
-          ? raw.catatan_internal.map(adaptNote)
+        catatan: Array.isArray(raw.catatan_internal ?? raw.catatans)
+          ? (raw.catatan_internal ?? raw.catatans).map(adaptNote)
           : [],
       }
     : null
 
-export const adaptAccount = (raw) => ({
-  id: raw.id,
-  username: raw.username,
-  name: raw.name,
-  role: raw.role,
-  active: Boolean(raw.active),
-  mustChangePassword: Boolean(raw.must_change_password),
-})
+export const adaptAccount = (raw) => {
+  const user = raw.user ?? raw
+  const active = user.active ?? user.is_active
+  return {
+    id: user.id ?? raw.users_id,
+    username:
+      raw.nis ??
+      raw.santri?.nis ??
+      raw.username ??
+      user.email ??
+      raw.email ??
+      raw.id_pengguna ??
+      null,
+    name: user.name ?? raw.name ?? null,
+    role: user.role ?? raw.role,
+    active:
+      active === true ||
+      active === 1 ||
+      active === '1' ||
+      active === 'true',
+    mustChangePassword: Boolean(
+      user.must_change_password ?? raw.must_change_password,
+    ),
+  }
+}
 
 export const adaptPagination = (meta, itemCount = 0) => {
   const currentPage = Number(meta?.current_page ?? meta?.currentPage ?? 1)

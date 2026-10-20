@@ -559,31 +559,44 @@ export const admin = {
     requireRole(user, ['pimpinan'])
     const errors = {}
     if (!payload.name) errors.name = ['Nama wajib diisi.']
-    if (!payload.username) errors.username = ['ID pengguna wajib diisi.']
-    if (!payload.role || payload.role === 'santri') {
-      errors.role = ['Pilih peran petugas.']
+    if (!payload.email) {
+      errors.email = ['Email wajib diisi.']
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.email)) {
+      errors.email = ['Email tidak valid.']
     }
-    if (payload.username && accounts.some((a) => a.username === payload.username)) {
-      errors.username = ['ID pengguna sudah dipakai.']
+    if (
+      payload.email &&
+      accounts.some(
+        (account) =>
+          String(account.email ?? account.username).toLowerCase() ===
+          payload.email.toLowerCase(),
+      )
+    ) {
+      errors.email = ['Email sudah digunakan.']
+    }
+    if (!payload.password) errors.password = ['Kata sandi wajib diisi.']
+    else if (payload.password.length < 8) {
+      errors.password = ['Kata sandi minimal 8 karakter.']
     }
     if (Object.keys(errors).length) fail(422, 'Periksa kembali isian.', errors)
     const id = Math.max(...accounts.map((a) => a.id)) + 1
     const account = {
       id,
-      username: payload.username,
-      password: payload.password || 'petugas123',
+      username: payload.email,
+      email: payload.email,
+      password: payload.password,
       name: payload.name,
-      role: payload.role,
+      role: 'pengurus',
       active: true,
-      mustChangePassword: true,
+      mustChangePassword: false,
     }
     accounts.push(account)
     return adaptAccount({
       id: account.id,
-      username: account.username,
+      email: account.email,
       name: account.name,
       role: account.role,
-      active: account.active,
+      is_active: account.active,
       must_change_password: account.mustChangePassword,
     })
   },
@@ -597,10 +610,10 @@ export const admin = {
     account.active = Boolean(active)
     return adaptAccount({
       id: account.id,
-      username: account.username,
+      email: account.email ?? account.username,
       name: account.name,
       role: account.role,
-      active: account.active,
+      is_active: account.active,
       must_change_password: account.mustChangePassword,
     })
   },

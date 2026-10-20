@@ -84,9 +84,10 @@ hanya menggunakannya bila API memang mengirimkannya:
   diminta_oleh, bukti_nama, bukti_url, dibuat, dijawab }`. Status jawaban
   `disetujui` atau `ditolak`; frontend menormalkan `true`/`1` menjadi
   `disetujui` dan `false`/`0` menjadi `ditolak`.
-- `catatan_internal` — array `{ id, catatan, users_id, laporan_id, created_at,
-  updated_at }`, hanya dikembalikan untuk staff. Frontend memetakan `catatan`
-  menjadi isi catatan dan menampilkan nama penulis jika `author_name` tersedia.
+- `catatan_internal` atau `catatans` — array `{ id, catatan, users_id,
+  laporan_id, created_at, updated_at, user? }`, hanya dikembalikan untuk staff.
+  Frontend memetakan `catatan` menjadi isi catatan dan mengambil nama penulis
+  dari `author_name` atau `user.name`.
 
 Permintaan izin memakai multipart dengan `alasan` wajib dan `bukti` opsional;
 frontend tidak mengirim field `bukti` bila berkas tidak dipilih. Bukti yang
@@ -122,16 +123,18 @@ endpoint khusus, ubah `previewImport` di `src/api/services/admin.js`.
 ⚠️ Bentuk respons impor final yang diharapkan:
 `{ data: { imported: number, accounts: [{ name, username, role, temporary_password }] } }`.
 
-## Akun petugas — ⚠️ DIASUMSIKAN SELURUHNYA
+## Akun petugas
 
-Belum ada di kontrak beku. F-17 menyebut pimpinan membuat dan menonaktifkan
-akun, tetapi endpoint kelola akun belum tercantum di kontrak. Frontend memakai:
+F-17 menyebut pimpinan membuat dan menonaktifkan akun, tetapi endpoint daftar
+dan ubah status belum tercantum di kontrak. Frontend memakai:
 
 - ⚠️ `GET /api/v1/admin/accounts` — `?q=&role=&active=` → `{ data: [...], meta }`
-- ⚠️ `POST /api/v1/admin/accounts` — `{ name, username, role, password? }`
+- `POST /api/v1/admin/accounts` — `{ name, email, password }`; backend menetapkan
+  role `pengurus`, status aktif, dan sebaiknya `must_change_password: false`
+  agar akun pengurus tidak diwajibkan mengganti kata sandi saat login.
 - ⚠️ `PATCH /api/v1/admin/accounts/{id}/status` — `{ active }`
 
-Field akun: `{ id, username, name, role, active, must_change_password }`.
+Field akun: `{ id, name, email, role, is_active, must_change_password }`.
 Jika backend memakai jalur/bentuk lain, sesuaikan di `src/api/services/admin.js`
 dan `adaptAccount` di `src/api/adapters.js`.
 

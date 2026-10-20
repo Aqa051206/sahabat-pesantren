@@ -53,9 +53,9 @@ export default function StaffReportDetailPage() {
   const { data: report, isLoading, isError, error, refetch } = useReport(id)
   const updateStatus = useUpdateStatus(id)
   const escalate = useEscalate(id)
-  const addNote = useAddNote(id)
   const toast = useToast()
   const { user } = useAuth()
+  const addNote = useAddNote(id, user?.name)
 
   const [escalateOpen, setEscalateOpen] = useState(false)
   const [tujuan, setTujuan] = useState('')
@@ -250,7 +250,7 @@ export default function StaffReportDetailPage() {
               >
                 <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-body">
                   <span className="font-semibold text-primary">
-                    {note.authorName ?? 'Petugas'}
+                    {note.authorName ?? 'Nama pengirim tidak tersedia'}
                   </span>
                   <span>{formatDateOnly(note.createdAt)}</span>
                 </div>
