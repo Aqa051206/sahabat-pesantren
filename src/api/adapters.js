@@ -14,15 +14,15 @@ export const adaptUser = (raw) =>
 export const adaptMessage = (raw) => ({
   id: raw.id,
   body: raw.isi ?? raw.body,
-  from: raw.from ?? raw.pengirim?.role ?? null,
-  senderId: raw.pengirim?.id ?? raw.pengirim?.users_id ?? null,
+  from: raw.pengirim?.role ?? raw.from ?? null,
+  senderId: raw.sender_id ?? raw.pengirim?.id ?? raw.pengirim?.users_id ?? null,
   senderName: raw.sender_name ?? raw.pengirim?.name ?? null,
   createdAt: raw.created_at ?? null,
 })
 
 export const adaptNote = (raw) => ({
   id: raw.id,
-  body: raw.body,
+  body: raw.catatan ?? raw.body,
   authorName: raw.author_name ?? null,
   createdAt: raw.created_at ?? null,
 })

@@ -125,7 +125,8 @@ const toRawReport = (report, viewer) => {
 const toRawMessage = (item) => ({
   id: item.id,
   from: item.from,
-  sender_name: item.from === 'petugas' ? item.senderName : null,
+  sender_id: item.senderId,
+  sender_name: item.from !== 'santri' ? item.senderName : null,
   isi: item.body,
   created_at: item.createdAt,
 })
@@ -401,7 +402,8 @@ export const messages = {
     }
     const item = {
       id: nextMessageId(),
-      from: user.role === 'santri' ? 'santri' : 'petugas',
+      from: user.role,
+      senderId: user.id,
       senderName: user.name,
       body: text,
       createdAt: offsetDate(0),
@@ -419,7 +421,9 @@ export const notes = {
     const report = accessibleReport(user, id)
     const text = String(body ?? '').trim()
     if (!text) {
-      fail(422, 'Catatan tidak boleh kosong.', { body: ['Catatan tidak boleh kosong.'] })
+      fail(422, 'Catatan tidak boleh kosong.', {
+        catatan: ['Catatan tidak boleh kosong.'],
+      })
     }
     const item = {
       id: nextNoteId(),
@@ -431,7 +435,7 @@ export const notes = {
     return adaptNote({
       id: item.id,
       author_name: item.authorName,
-      body: item.body,
+      catatan: item.body,
       created_at: item.createdAt,
     })
   },

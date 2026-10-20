@@ -48,7 +48,7 @@ disebutkan tetap merupakan asumsi sampai dikonfirmasi tim backend.
   server menentukan `users_id`, `no_laporan`, `status`, dan `waktu`.
   Memperbarui identitas `{ tampilkan_identitas }`;
   memperbarui status `{ status }`; eskalasi `{ tujuan, catatan }`; catatan
-  internal `{ body }`; pesan percakapan `{ isi }`.
+  internal `{ catatan }`; pesan percakapan `{ isi }`.
 ⚠️ Daftar laporan santri dan petugas mengambil semua halaman API memakai
 `?page=` lalu menerapkan filter status, kategori, dan kode laporan serta
 pagination di frontend. Respons paginator diharapkan menyediakan `last_page`
@@ -84,8 +84,9 @@ hanya menggunakannya bila API memang mengirimkannya:
   diminta_oleh, bukti_nama, bukti_url, dibuat, dijawab }`. Status jawaban
   `disetujui` atau `ditolak`; frontend menormalkan `true`/`1` menjadi
   `disetujui` dan `false`/`0` menjadi `ditolak`.
-- `catatan_internal` — array `{ id, body, author_name, created_at }`, hanya
-  dikembalikan untuk staff.
+- `catatan_internal` — array `{ id, catatan, users_id, laporan_id, created_at,
+  updated_at }`, hanya dikembalikan untuk staff. Frontend memetakan `catatan`
+  menjadi isi catatan dan menampilkan nama penulis jika `author_name` tersedia.
 
 Permintaan izin memakai multipart dengan `alasan` wajib dan `bukti` opsional;
 frontend tidak mengirim field `bukti` bila berkas tidak dipilih. Bukti yang

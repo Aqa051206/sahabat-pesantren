@@ -67,27 +67,40 @@ export function Conversation({ id, viewer }) {
       message.from === 'pengurus' ||
       message.from === 'pimpinan'
     ) {
-      return 'petugas'
+      return message.from
     }
-    if (
-      (message.senderId != null &&
-        user?.id != null &&
-        String(message.senderId) === String(user.id)) ||
-      (message.senderName && user?.name && message.senderName === user.name)
-    ) {
-      return viewer === 'santri' ? 'santri' : 'petugas'
-    }
-    return viewer === 'santri' ? 'petugas' : 'santri'
+    return null
   }
 
-  const labelFor = (message, senderRole) => {
+  const isOwn = (message, senderRole) => {
+    if (message.senderId != null && user?.id != null) {
+      return String(message.senderId) === String(user.id)
+    }
+    if (message.senderName && user?.name) {
+      return message.senderName === user.name
+    }
+    if (senderRole === 'santri') return viewer === 'santri'
+    if (senderRole === 'pengurus' || senderRole === 'pimpinan') {
+      return senderRole === user?.role
+    }
+    return false
+  }
+
+  const labelFor = (message, senderRole, own) => {
     if (viewer === 'santri') {
       return senderRole === 'santri' ? 'Kamu' : 'Petugas'
     }
-    return senderRole === 'santri' ? 'Pelapor' : message.senderName || 'Petugas'
+    if (senderRole === 'santri') return 'Pelapor'
+    if (own) return message.senderName || user?.name || 'Petugas'
+    if (senderRole === 'pengurus' || senderRole === 'pimpinan') {
+      return senderRole === user?.role
+        ? message.senderName || senderRole
+        : senderRole === 'pengurus'
+          ? 'Pengurus'
+          : 'Pimpinan'
+    }
+    return message.senderName || 'Petugas'
   }
-
-  const isOwn = (senderRole) => senderRole === viewer
 
   const onSubmit = async (values) => {
     try {
@@ -125,22 +138,22 @@ export function Conversation({ id, viewer }) {
         ) : messages.length ? (
           messages.map((message) => {
             const senderRole = senderRoleFor(message)
-            const own = isOwn(senderRole)
+            const own = isOwn(message, senderRole)
             return (
               <div
                 key={message.id}
                 className={cn(
-                  'flex flex-col gap-1 rounded-2xl px-4 py-3',
+                  'flex max-w-[85%] flex-col gap-1 rounded-2xl px-4 py-3',
                   own
-                    ? 'self-end bg-primary text-white'
+                    ? 'self-end bg-report-green text-[#12372a]'
                     : 'self-start bg-band-1 text-navy',
                 )}
               >
                 <div className="flex items-center gap-2 text-xs font-semibold">
-                  <span className={own ? 'text-white' : 'text-primary'}>
-                    {labelFor(message, senderRole)}
+                  <span className={own ? 'text-[#216b49]' : 'text-primary'}>
+                    {labelFor(message, senderRole, own)}
                   </span>
-                  <span className={own ? 'text-white/70' : 'text-body'}>
+                  <span className={own ? 'text-[#216b49]/70' : 'text-body'}>
                     {formatDateOnly(message.createdAt)}
                   </span>
                 </div>

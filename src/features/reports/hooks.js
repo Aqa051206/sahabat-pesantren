@@ -108,8 +108,15 @@ export const useAddNote = (id) => {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (body) => api.notes.addNote(id, body),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: reportKeys.detail(id) })
+    onSuccess: (note) => {
+      queryClient.setQueryData(reportKeys.detail(id), (report) => {
+        if (!report) return report
+        const notes = report.catatan ?? []
+        if (notes.some((item) => String(item.id) === String(note.id))) {
+          return report
+        }
+        return { ...report, catatan: [...notes, note] }
+      })
     },
   })
 }

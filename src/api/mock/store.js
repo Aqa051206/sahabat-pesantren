@@ -73,13 +73,17 @@ export const personName = (id) =>
 let messageId = 100
 let noteId = 100
 
-const message = (from, senderName, body, daysAgo) => ({
-  id: (messageId += 1),
-  from,
-  senderName,
-  body,
-  createdAt: offsetDate(daysAgo),
-})
+const message = (from, senderName, body, daysAgo) => {
+  const sender = accounts.find((account) => account.name === senderName)
+  return {
+    id: (messageId += 1),
+    from: sender?.role ?? from,
+    senderId: sender?.id ?? null,
+    senderName,
+    body,
+    createdAt: offsetDate(daysAgo),
+  }
+}
 
 const note = (authorName, body, daysAgo) => ({
   id: (noteId += 1),
