@@ -18,7 +18,6 @@ import Input from '../../components/ui/Input'
 import Modal from '../../components/ui/Modal'
 import Select from '../../components/ui/Select'
 import Skeleton from '../../components/ui/Skeleton'
-import Switch from '../../components/ui/Switch'
 import { useToast } from '../../components/ui/toast-context'
 import {
   useAccounts,
@@ -26,11 +25,12 @@ import {
   useImportSantri,
   usePreviewImport,
   useSetAccountActive,
-  useTemplate,
+  useExportSantri,
 } from '../../features/accounts/hooks'
-import { downloadCsv } from '../../lib/csv'
 import { cn } from '../../lib/cn'
 import { MAX_IMPORT_BYTES, ROLE_LABELS, ROLES } from '../../lib/constants'
+import { downloadBlob } from '../../lib/download'
+import { createSantriTemplateWorkbookBlob } from '../../lib/santriWorkbook'
 
 const ACTIVE_OPTIONS = [
   { value: '', label: 'Semua status' },
@@ -38,7 +38,7 @@ const ACTIVE_OPTIONS = [
   { value: 'false', label: 'Nonaktif' },
 ]
 
-const ACCEPTED_EXT = ['.csv', '.xlsx', '.xls']
+const ACCEPTED_EXT = ['.xlsx']
 
 function AccountsTab({ role }) {
   const toast = useToast()
@@ -295,77 +295,78 @@ function AccountsTab({ role }) {
 function ImportTab() {
   const toast = useToast()
   const inputRef = useRef(null)
-  const template = useTemplate()
   const preview = usePreviewImport()
   const importMut = useImportSantri()
+  const exportSantri = useExportSantri()
 
   const [file, setFile] = useState(null)
   const [rows, setRows] = useState(null)
-  const [acknowledged, setAcknowledged] = useState(false)
+  const [canImport, setCanImport] = useState(false)
   const [result, setResult] = useState(null)
 
   const resetPreview = () => {
     setRows(null)
-    setAcknowledged(false)
+    setCanImport(false)
     setResult(null)
   }
 
   const handleFile = async (event) => {
     const selected = event.target.files?.[0] ?? null
+    event.target.value = ''
     resetPreview()
+    setFile(null)
     if (!selected) {
-      setFile(null)
       return
     }
     const lower = selected.name.toLowerCase()
     if (!ACCEPTED_EXT.some((ext) => lower.endsWith(ext))) {
-      toast.showToast('Berkas harus berupa CSV atau Excel.', 'error')
-      event.target.value = ''
+      toast.showToast('Berkas harus berupa Excel .xlsx.', 'error')
       return
     }
     if (selected.size > MAX_IMPORT_BYTES) {
-      toast.showToast('Ukuran berkas maksimal 2 MB.', 'error')
-      event.target.value = ''
+      toast.showToast('Ukuran berkas maksimal 5 MB.', 'error')
       return
     }
     setFile(selected)
     try {
       const data = await preview.mutateAsync(selected)
       setRows(data.rows ?? [])
+      setCanImport(Boolean(data.canImport))
     } catch (error) {
       toast.showToast(error?.message ?? 'Pratinjau gagal dimuat.', 'error')
     }
   }
 
   const doImport = async () => {
-    if (!file || !acknowledged) return
+    if (!file || !canImport) return
     try {
-      const data = await importMut.mutateAsync({ file, acknowledged })
+      const data = await importMut.mutateAsync({ file })
       setResult(data)
-      toast.showToast(`${data.imported} akun santri dibuat.`, 'success')
+      toast.showToast(
+        data.message ?? `${data.imported} data santri berhasil diproses.`,
+        'success',
+      )
     } catch (error) {
       toast.showToast(error?.message ?? 'Impor gagal.', 'error')
     }
   }
 
-  const downloadTemplate = () => {
-    if (!template.data) return
-    downloadCsv(template.data.filename, [
-      template.data.columns,
-      ...template.data.rows,
-    ])
+  const downloadTemplate = async () => {
+    try {
+      const blob = await createSantriTemplateWorkbookBlob()
+      downloadBlob(blob, 'template-import-santri.xlsx')
+    } catch (error) {
+      toast.showToast(error?.message ?? 'Template gagal dibuat.', 'error')
+    }
   }
 
-  const downloadCredentials = () => {
-    if (!result?.accounts?.length) return
-    downloadCsv('akun-santri-baru.csv', [
-      ['nama', 'id_pengguna', 'kata_sandi_sementara'],
-      ...result.accounts.map((account) => [
-        account.name,
-        account.username,
-        account.temporaryPassword,
-      ]),
-    ])
+  const downloadCurrentData = async () => {
+    try {
+      const file = await exportSantri.mutateAsync()
+      downloadBlob(file.blob, file.filename)
+    } catch (error) {
+      toast.showToast(error?.message ?? 'Unduh data santri gagal.', 'error')
+    }
   }
 
   const validCount = rows?.filter((row) => row.valid).length ?? 0
@@ -379,18 +380,30 @@ function ImportTab() {
           Langkah 1 — Siapkan berkas
         </h2>
         <p className="mt-1 text-sm text-body">
-          Unggah berkas CSV atau Excel berisi data santri. Ukuran maksimal 2 MB.
+          Template sederhana berisi nama, email, NIS, jenis kelamin, telepon
+          wali, dan password. NIS digunakan untuk memperbarui data yang sudah
+          ada atau membuat akun baru; jangan ubah NIS jika ingin memperbarui
+          akun yang sama. Untuk akun lama, password boleh dikosongkan agar
+          tetap memakai password sebelumnya. Akun baru wajib diisi password
+          minimal 8 karakter. Maksimal 500 baris dan 5 MB.
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <Button
             variant="secondary"
             size="sm"
             onClick={downloadTemplate}
-            disabled={!template.data}
-            loading={template.isLoading}
           >
             <Download aria-hidden="true" className="size-4" />
             Unduh template
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            loading={exportSantri.isPending}
+            onClick={downloadCurrentData}
+          >
+            <Download aria-hidden="true" className="size-4" />
+            Unduh data saat ini
           </Button>
           <input
             ref={inputRef}
@@ -424,13 +437,15 @@ function ImportTab() {
               </span>
             </div>
             <div className="mt-4 overflow-x-auto">
-              <table className="w-full min-w-[32rem] border-collapse text-sm">
+              <table className="w-full min-w-[56rem] border-collapse text-sm">
                 <thead>
                   <tr className="text-left text-body">
                     <th className="px-3 py-2 font-semibold">#</th>
                     <th className="px-3 py-2 font-semibold">Nama</th>
+                    <th className="px-3 py-2 font-semibold">Email</th>
                     <th className="px-3 py-2 font-semibold">NIS</th>
-                    <th className="px-3 py-2 font-semibold">Kelas</th>
+                    <th className="px-3 py-2 font-semibold">Jenis kelamin</th>
+                    <th className="px-3 py-2 font-semibold">Telepon wali</th>
                     <th className="px-3 py-2 font-semibold">Status</th>
                   </tr>
                 </thead>
@@ -439,8 +454,14 @@ function ImportTab() {
                     <tr key={row.index} className="border-t border-border">
                       <td className="px-3 py-2 text-body">{row.index}</td>
                       <td className="px-3 py-2 text-navy">{row.name || '—'}</td>
+                      <td className="px-3 py-2 text-navy">{row.email || '—'}</td>
                       <td className="px-3 py-2 text-navy">{row.nis || '—'}</td>
-                      <td className="px-3 py-2 text-navy">{row.kelas || '—'}</td>
+                      <td className="px-3 py-2 text-navy">
+                        {row.jenisKelamin || '—'}
+                      </td>
+                      <td className="px-3 py-2 text-navy">
+                        {row.teleponOrtu || '—'}
+                      </td>
                       <td className="px-3 py-2">
                         {row.valid ? (
                           <span className="inline-flex items-center gap-1 text-status-done">
@@ -463,22 +484,13 @@ function ImportTab() {
 
           <Card className="p-5">
             <h2 className="text-lg font-semibold text-navy">
-              Langkah 3 — Konfirmasi &amp; impor
+              Langkah 3 — Impor
             </h2>
-            <div className="mt-3">
-              <Switch
-                id="import-ack"
-                label="Wali santri sudah memberikan persetujuan"
-                description="Impor hanya boleh dilakukan dengan persetujuan wali santri."
-                checked={acknowledged}
-                onChange={setAcknowledged}
-              />
-            </div>
             <div className="mt-4 flex justify-end">
               <Button
                 onClick={doImport}
                 loading={importMut.isPending}
-                disabled={!acknowledged || invalidCount > 0}
+                disabled={!canImport || invalidCount > 0}
               >
                 <Upload aria-hidden="true" className="size-4" />
                 Impor {validCount} data
@@ -495,37 +507,9 @@ function ImportTab() {
             Impor selesai
           </h2>
           <p className="mt-1 text-sm text-body">
-            {result.imported} akun santri berhasil dibuat. Bagikan kata sandi
-            sementara ini secara aman.
+            {result.message ??
+              `${result.imported} data santri berhasil diproses.`}
           </p>
-          <div className="mt-4 overflow-x-auto">
-            <table className="w-full min-w-[28rem] border-collapse text-sm">
-              <thead>
-                <tr className="text-left text-body">
-                  <th className="px-3 py-2 font-semibold">Nama</th>
-                  <th className="px-3 py-2 font-semibold">ID pengguna</th>
-                  <th className="px-3 py-2 font-semibold">Kata sandi sementara</th>
-                </tr>
-              </thead>
-              <tbody>
-                {result.accounts.map((account) => (
-                  <tr key={account.username} className="border-t border-border">
-                    <td className="px-3 py-2 text-navy">{account.name}</td>
-                    <td className="px-3 py-2 text-navy">{account.username}</td>
-                    <td className="px-3 py-2 font-mono text-navy">
-                      {account.temporaryPassword}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div className="mt-4 flex justify-end">
-            <Button variant="secondary" size="sm" onClick={downloadCredentials}>
-              <Download aria-hidden="true" className="size-4" />
-              Unduh daftar akun
-            </Button>
-          </div>
         </Card>
       ) : null}
     </div>
@@ -538,7 +522,7 @@ export default function AccountsPage() {
   const tabs = [
     { value: 'pengurus', label: 'Akun Pengurus' },
     { value: 'santri', label: 'Akun Santri' },
-    { value: 'import', label: 'Impor Santri' },
+    { value: 'import', label: 'Impor / Update Santri' },
   ]
 
   return (
@@ -546,7 +530,7 @@ export default function AccountsPage() {
       <header>
         <h1 className="text-3xl">Kelola Akun</h1>
         <p className="mt-1 text-body">
-          Kelola akun petugas dan tambahkan data santri lewat impor.
+          Kelola akun petugas; ekspor, edit, dan impor data santri.
         </p>
       </header>
 

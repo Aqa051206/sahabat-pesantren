@@ -12,6 +12,11 @@ import {
   IDENTITY_PROOF_MAX_BYTES,
   routesToPimpinan,
 } from '../../lib/constants'
+import {
+  createSantriWorkbookBlob,
+  createSantriTemplateWorkbookBlob,
+  readSantriWorkbook,
+} from '../../lib/santriWorkbook'
 import { clearSession, emitSessionExpired, getToken } from '../../lib/session'
 import {
   accounts,
@@ -455,22 +460,83 @@ export const dashboard = {
   },
 }
 
-const simulatePreview = (file) => {
-  const base = file?.name?.replace(/\.[^.]+$/, '') ?? 'data'
-  return [
-    { index: 1, name: 'Ahmad Fauzi', nis: '20260011', kelas: '7A', valid: true, errors: [] },
-    { index: 2, name: 'Siti Aminah', nis: '20260012', kelas: '7B', valid: true, errors: [] },
-    { index: 3, name: '', nis: '20260013', kelas: '8A', valid: false, errors: ['Nama kosong'] },
-    { index: 4, name: 'Ridwan Hakim', nis: '', kelas: '8B', valid: false, errors: ['NIS kosong'] },
-    {
-      index: 5,
-      name: `Contoh dari ${base}`,
-      nis: '20260015',
-      kelas: '9A',
-      valid: true,
-      errors: [],
-    },
-  ]
+const previewSantriImport = async (file) => {
+  const rows = await readSantriWorkbook(file)
+  if (rows.length > 500) {
+    fail(422, 'Maksimal 500 baris data per import.')
+  }
+  const errors = []
+  const seenEmails = new Set()
+  const seenNis = new Set()
+  const previewRows = rows.map((row) => {
+    const rowErrors = {}
+    const existing = accounts.find(
+      (account) =>
+        account.role === 'santri' &&
+        String(account.nis ?? account.username) === String(row.nis),
+    )
+    const addError = (field, message) => {
+      rowErrors[field] = [...(rowErrors[field] ?? []), message]
+    }
+
+    if (!row.name) addError('name', 'Nama wajib diisi.')
+    if (!row.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(row.email)) {
+      addError('email', 'Email wajib diisi dengan format yang valid.')
+    }
+    if (!row.nis) addError('nis', 'NIS wajib diisi.')
+    if (!['laki', 'perempuan'].includes(row.jenisKelamin)) {
+      addError('jenis_kelamin', 'Jenis kelamin harus laki atau perempuan.')
+    }
+    if (row.teleponOrtu.length < 10 || row.teleponOrtu.length > 20) {
+      addError('telepon_ortu', 'Telepon wali harus 10–20 karakter.')
+    }
+    if (existing && row.password && row.password.length < 8) {
+      addError('password', 'Password baru minimal 8 karakter.')
+    } else if (!existing && row.password.length < 8) {
+      addError('password', 'Password santri baru wajib minimal 8 karakter.')
+    }
+
+    const emailKey = row.email.toLocaleLowerCase()
+    const existingEmail = accounts.some(
+      (account) =>
+        account.id !== existing?.id &&
+        account.email?.toLocaleLowerCase() === emailKey,
+    )
+    if (emailKey && (seenEmails.has(emailKey) || existingEmail)) {
+      addError('email', 'Email sudah digunakan.')
+    }
+    const nisKey = row.nis
+    const existingNis = accounts.some(
+      (account) =>
+        account.id !== existing?.id &&
+        (account.nis ?? (account.role === 'santri' ? account.username : null)) ===
+          nisKey,
+    )
+    if (nisKey && (seenNis.has(nisKey) || existingNis)) {
+      addError('nis', 'NIS sudah digunakan.')
+    }
+    if (emailKey) seenEmails.add(emailKey)
+    if (nisKey) seenNis.add(nisKey)
+
+    if (Object.keys(rowErrors).length) {
+      errors.push({ row: row.index, errors: rowErrors })
+    }
+    return {
+      row: row.index,
+      name: row.name,
+      email: row.email,
+      nis: row.nis,
+      jenis_kelamin: row.jenisKelamin,
+      telepon_ortu: row.teleponOrtu,
+      valid: Object.keys(rowErrors).length === 0,
+    }
+  })
+  return {
+    data: previewRows,
+    errors,
+    can_import: previewRows.length > 0 && errors.length === 0,
+    message: 'Preview import selesai; belum ada data yang disimpan.',
+  }
 }
 
 export const admin = {
@@ -479,12 +545,8 @@ export const admin = {
     const user = requireUser()
     requireRole(user, ['pimpinan'])
     return {
-      filename: 'template-santri.csv',
-      columns: ['nama', 'nis', 'kelas', 'jenis_kelamin'],
-      rows: [
-        ['Ahmad Fauzi', '20260011', '7A', 'L'],
-        ['Siti Aminah', '20260012', '7B', 'P'],
-      ],
+      filename: 'template-import-santri.xlsx',
+      blob: await createSantriTemplateWorkbookBlob(),
     }
   },
 
@@ -492,27 +554,99 @@ export const admin = {
     await delay()
     const user = requireUser()
     requireRole(user, ['pimpinan'])
-    return { rows: simulatePreview(file) }
+    const preview = await previewSantriImport(file)
+    const rowErrors = new Map(
+      preview.errors.map((item) => [
+        Number(item.row),
+        Object.values(item.errors).flat(),
+      ]),
+    )
+    return {
+      rows: preview.data.map((row) => ({
+        index: row.row,
+        name: row.name,
+        email: row.email,
+        nis: row.nis,
+        jenisKelamin: row.jenis_kelamin,
+        teleponOrtu: row.telepon_ortu,
+        valid: row.valid,
+        errors: rowErrors.get(row.row) ?? [],
+      })),
+      canImport: preview.can_import,
+      message: preview.message,
+    }
   },
 
-  async importSantri({ acknowledged }) {
+  async importSantri({ file }) {
     await delay(500)
     const user = requireUser()
     requireRole(user, ['pimpinan'])
-    if (!acknowledged) {
-      fail(422, 'Persetujuan wali santri wajib dicentang.', {
-        acknowledged: ['Persetujuan wali santri wajib dicentang.'],
+    const preview = await previewSantriImport(file)
+    if (!preview.can_import) {
+      fail(422, 'Impor dibatalkan karena file kosong atau memiliki baris tidak valid.', {
+        rows: preview.errors,
       })
     }
-    const valid = simulatePreview({ name: 'santri.xlsx' }).filter((row) => row.valid)
+    let created = 0
+    let updated = 0
+    const rows = await readSantriWorkbook(file)
+    rows.forEach((row) => {
+      const existing = accounts.find(
+        (account) =>
+          account.role === 'santri' &&
+          String(account.nis ?? account.username) === String(row.nis),
+      )
+      if (existing) {
+        existing.name = row.name
+        existing.email = row.email
+        existing.nis = row.nis
+        existing.username = row.nis
+        existing.jenisKelamin = row.jenisKelamin
+        existing.teleponOrtu = row.teleponOrtu
+        if (row.password) existing.password = row.password
+        updated += 1
+      } else {
+        accounts.push({
+          id: Math.max(...accounts.map((account) => account.id)) + 1,
+          username: row.nis,
+          password: row.password,
+          name: row.name,
+          email: row.email,
+          nis: row.nis,
+          jenisKelamin: row.jenisKelamin,
+          teleponOrtu: row.teleponOrtu,
+          role: 'santri',
+          active: true,
+          mustChangePassword: false,
+        })
+        created += 1
+      }
+    })
     return {
-      imported: valid.length,
-      accounts: valid.map((row, index) => ({
-        name: row.name,
-        username: row.nis,
-        role: 'santri',
-        temporaryPassword: `SP!${202600 + index}`,
-      })),
+      imported: rows.length,
+      created,
+      updated,
+      message: `${created} data santri ditambahkan dan ${updated} data diperbarui.`,
+    }
+  },
+
+  async exportSantri() {
+    await delay()
+    const user = requireUser()
+    requireRole(user, ['pimpinan'])
+    const rows = accounts
+      .filter((account) => account.role === 'santri')
+      .map((account) => [
+        account.name,
+        account.email ?? '',
+        account.nis ?? account.username,
+        account.jenisKelamin ?? '',
+        account.teleponOrtu ?? '',
+        '',
+      ])
+    return {
+      filename: 'data-santri.xlsx',
+      blob: await createSantriWorkbookBlob(rows),
     }
   },
 

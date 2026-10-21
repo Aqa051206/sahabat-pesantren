@@ -39,8 +39,17 @@ export const useTemplate = () =>
     staleTime: Infinity,
   })
 
+export const useExportSantri = () =>
+  useMutation({ mutationFn: () => api.admin.exportSantri() })
+
 export const usePreviewImport = () =>
   useMutation({ mutationFn: (file) => api.admin.previewImport(file) })
 
-export const useImportSantri = () =>
-  useMutation({ mutationFn: (payload) => api.admin.importSantri(payload) })
+export const useImportSantri = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (payload) => api.admin.importSantri(payload),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ['admin', 'accounts'] }),
+  })
+}

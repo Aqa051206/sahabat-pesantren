@@ -1,6 +1,7 @@
 import {
   FilePlus2,
   FileText,
+  UserRound,
 } from 'lucide-react'
 import { useCallback, useEffect, useRef } from 'react'
 import { Outlet, useNavigate } from 'react-router-dom'
@@ -16,6 +17,7 @@ import { IDLE_TIMEOUT_SECONDS } from '../lib/env'
 const NAV_ITEMS = [
   { to: '/santri/buat-laporan', label: 'Buat Laporan', icon: FilePlus2 },
   { to: '/santri/laporan-saya', label: 'Laporan Saya', icon: FileText },
+  { to: '/santri/profil', label: 'Profil', icon: UserRound },
 ]
 
 export function SantriLayout() {

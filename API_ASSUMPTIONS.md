@@ -18,7 +18,10 @@ disebutkan tetap merupakan asumsi sampai dikonfirmasi tim backend.
   Respons mendukung `{ data: { token, user } }` dan objek langsung
   `{ access_token, user, message }`; field pengguna `must_change_password`
   dipetakan ke `mustChangePassword`.
-- ⚠️ Asumsi request ganti kata sandi `{ current_password, new_password }`; respons `{ data: { ok } }`.
+- ⚠️ Request ganti kata sandi mengirim
+  `{ current_password, password, password_confirmation }`; nama field
+  `password` mengikuti error validasi aktual backend ("The password field is
+  required."). Password baru minimal 8 karakter; respons `{ data: { ok } }`.
 - ⚠️ Asumsi bentuk `user`: `{ id, name, role, must_change_password }`, dengan
   `role ∈ { santri, pengurus, pimpinan }`.
 
@@ -107,21 +110,40 @@ Endpoint ini hanya digunakan untuk dashboard pimpinan. Dashboard pengurus
 menghitung ringkasan dari `GET /api/v1/reports` dan filter status, sehingga
 data yang dihitung mengikuti laporan yang memang dapat diakses peran tersebut.
 
-## Impor santri (Excel/CSV)
+## Impor dan ekspor santri (Excel)
 
-- ✅ `GET /api/v1/admin/santri/template`
-- ✅ `POST /api/v1/admin/santri/import`
+- ✅ `GET /api/admin/santri/template` — route template backend.
+- ✅ `POST /api/admin/santri/import` — multipart `action=preview|import` dan `file`.
+- ✅ `GET /api/admin/santri/export` — route ekspor dikonfirmasi backend.
+  Frontend saat ini membuat template kosong lokal dengan kolom
+  `name`, `email`, `nis`, `jenis_kelamin`, `telepon_ortu`, `password`.
+  Export harus mengembalikan data akun terkini dengan urutan kolom yang sama
+  dan password kosong; NIS menjadi kunci untuk memperbarui data lama.
+- ⚠️ Batas dari controller yang dibagikan backend: `.xlsx`, maksimal 5 MB dan
+  500 baris. Preview mengembalikan
+  `{ data: [{ row, name, email, nis, jenis_kelamin, telepon_ortu, valid }],
+  errors: [{ row, errors }], can_import, message }`. Import final
+  mengembalikan `{ imported, message }`.
 
-⚠️ Asumsi: respons template `{ data: { filename, columns, rows } }`.
-Template dari endpoint mock berupa CSV, sedangkan PRD menyebut template Excel.
-Frontend mengasumsikan file impor berukuran ≤ 2 MB dengan ekstensi
-`.csv/.xlsx/.xls`. Tidak ada endpoint preview terpisah yang diketahui; frontend
-memanggil endpoint impor yang sama dengan parameter `?preview=1` dan berharap respons
-`{ data: { rows: [{ index, name, nis, kelas, valid, errors[] }] } }`. Bila ada
-endpoint khusus, ubah `previewImport` di `src/api/services/admin.js`.
+Template kosong sederhana memakai kolom `name`, `email`, `nis`,
+`jenis_kelamin`, `telepon_ortu`, `password`, sesuai format yang diminta.
+Backend mengonfirmasi import menggunakan NIS untuk memperbarui data lama
+atau membuat akun baru bila NIS belum ada. Untuk mendukung alur edit-ekspor-
+impor, import harus mengizinkan password kosong bila NIS sudah terdaftar
+(password lama tidak berubah), tetapi mewajibkan password minimal 8 karakter
+untuk NIS baru. Validasi email harus mengizinkan email milik akun yang sedang
+diperbarui, namun tetap menolak email yang dipakai akun lain. Santri yang
+tidak tercantum tidak dihapus atau dinonaktifkan.
 
-⚠️ Bentuk respons impor final yang diharapkan:
-`{ data: { imported: number, accounts: [{ name, username, role, temporary_password }] } }`.
+## Kata sandi
+
+Frontend mengizinkan kata sandi baru minimal 8 karakter dan menyediakan
+tampilkan/sembunyikan untuk kolom kata sandi. Santri tidak lagi dipaksa
+mengubah kata sandi setelah login; perubahan dilakukan dari menu Profil.
+Endpoint `/auth/password` diharapkan menerima field `current_password`,
+`password`, dan `password_confirmation`. Validasi minimum password adalah
+8 karakter. Backend impor juga perlu menonaktifkan flag wajib ganti kata
+sandi untuk akun santri baru.
 
 ## Akun petugas
 

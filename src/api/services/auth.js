@@ -25,7 +25,8 @@ export const login = async ({ identifier, password }) => {
 export const changePassword = async ({ currentPassword, newPassword }) => {
   await http.post('/auth/password', {
     current_password: currentPassword,
-    new_password: newPassword,
+    password: newPassword,
+    password_confirmation: newPassword,
   })
 }
 

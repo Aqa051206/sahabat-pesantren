@@ -8,7 +8,7 @@ import { z } from 'zod'
 import Brand from '../components/Brand'
 import DemoBanner from '../components/DemoBanner'
 import { useAuth } from '../features/auth/auth-context'
-import { homeForRole } from '../lib/constants'
+import { homeForRole, ROLES } from '../lib/constants'
 import { USE_MOCK } from '../lib/env'
 
 const schema = z.object({
@@ -18,7 +18,7 @@ const schema = z.object({
 
 const DEMO_ACCOUNTS = [
   { label: 'Santri', identifier: 'santri1', password: 'santri123' },
-  { label: 'Santri (ganti sandi)', identifier: 'santri2', password: 'santri123' },
+  { label: 'Santri 2', identifier: 'santri2', password: 'santri123' },
   { label: 'Pengurus', identifier: 'pengurus1', password: 'pengurus123' },
   { label: 'Pimpinan', identifier: 'pimpinan1', password: 'pimpinan123' },
 ]
@@ -68,7 +68,10 @@ export default function LoginPage() {
     try {
       const loggedIn = await login(values)
       await new Promise((resolve) => setTimeout(resolve, 1200))
-      if (loggedIn.mustChangePassword) {
+      if (
+        loggedIn.mustChangePassword &&
+        loggedIn.role !== ROLES.SANTRI
+      ) {
         navigate('/ganti-password', { replace: true })
       } else {
         navigate(homeForRole(loggedIn.role), { replace: true })

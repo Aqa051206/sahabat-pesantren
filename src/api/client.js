@@ -21,7 +21,17 @@ http.interceptors.request.use((config) => {
 
 http.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
+    const body = error?.response?.data
+    if (typeof Blob !== 'undefined' && body instanceof Blob) {
+      const text = await body.text()
+      try {
+        error.response.data = text ? JSON.parse(text) : {}
+      } catch {
+        error.response.data = {}
+      }
+    }
+
     if (
       error?.response?.status === 401 &&
       !error?.config?.skipSessionExpiry

@@ -5,7 +5,7 @@ import Brand from '../components/Brand'
 import DemoBanner from '../components/DemoBanner'
 import ButtonLink from '../components/ui/ButtonLink'
 import { useAuth } from '../features/auth/auth-context'
-import { homeForRole } from '../lib/constants'
+import { homeForRole, ROLES } from '../lib/constants'
 import { USE_MOCK } from '../lib/env'
 
 const NAV_ITEMS = [
@@ -19,7 +19,7 @@ export function PublicLayout() {
   const { user, isAuthenticated } = useAuth()
   const destination =
     isAuthenticated && user
-      ? user.mustChangePassword
+      ? user.mustChangePassword && user.role !== ROLES.SANTRI
         ? '/ganti-password'
         : homeForRole(user.role)
       : '/login'

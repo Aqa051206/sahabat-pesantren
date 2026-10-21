@@ -3,26 +3,59 @@ import { adaptAccount, adaptPagination } from '../adapters'
 
 const unwrap = (response) => response.data.data
 
-export const getTemplate = async () =>
-  unwrap(await http.get('/admin/santri/template'))
-
-// Catatan: tidak ada endpoint preview terpisah di kontrak beku. Mode asli
-// memakai endpoint import yang sama dengan penanda `preview=1`.
-// Lihat API_ASSUMPTIONS.md.
-export const previewImport = async (file) => {
-  const form = new FormData()
-  form.append('file', file)
-  const { data } = await http.post('/admin/santri/import', form, {
-    params: { preview: 1 },
-  })
-  return data.data
+const downloadPayload = (response, fallbackFilename) => {
+  const disposition = response.headers?.['content-disposition'] ?? ''
+  const encodedFilename = disposition.match(/filename\*=UTF-8''([^;]+)/i)?.[1]
+  const plainFilename = disposition.match(/filename="?([^";]+)"?/i)?.[1]
+  return {
+    blob: response.data,
+    filename: decodeURIComponent(encodedFilename ?? plainFilename ?? fallbackFilename),
+  }
 }
 
-export const importSantri = async ({ file, acknowledged }) => {
+export const getTemplate = async () =>
+  downloadPayload(
+    await http.get('/admin/santri/template', { responseType: 'blob' }),
+    'template-import-santri.xlsx',
+  )
+
+export const exportSantri = async () =>
+  downloadPayload(
+    await http.get('/admin/santri/export', { responseType: 'blob' }),
+    'data-santri.xlsx',
+  )
+
+export const previewImport = async (file) => {
   const form = new FormData()
+  form.append('action', 'preview')
   form.append('file', file)
-  form.append('acknowledged', acknowledged ? '1' : '0')
-  return unwrap(await http.post('/admin/santri/import', form))
+  const { data } = await http.post('/admin/santri/import', form)
+  const rowErrors = new Map(
+    (data.errors ?? []).map((item) => [
+      Number(item.row),
+      Object.values(item.errors ?? {}).flat(),
+    ]),
+  )
+  const rows = (data.data ?? []).map((row) => ({
+    index: Number(row.row),
+    name: row.name ?? '',
+    email: row.email ?? '',
+    nis: row.nis ?? '',
+    jenisKelamin: row.jenis_kelamin ?? '',
+    teleponOrtu: row.telepon_ortu ?? '',
+    valid: Boolean(row.valid),
+    errors: rowErrors.get(Number(row.row)) ?? [],
+  }))
+
+  return { rows, canImport: Boolean(data.can_import), message: data.message }
+}
+
+export const importSantri = async ({ file }) => {
+  const form = new FormData()
+  form.append('action', 'import')
+  form.append('file', file)
+  const { data } = await http.post('/admin/santri/import', form)
+  return data.data ?? data
 }
 
 // Endpoint akun (GET/POST/PATCH) DIASUMSIKAN, belum ada di kontrak beku.

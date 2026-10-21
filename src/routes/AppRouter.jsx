@@ -68,6 +68,10 @@ export default function AppRouter() {
           <Route path="buat-laporan" element={<CreateReportPage />} />
           <Route path="laporan-saya" element={<MyReportsPage />} />
           <Route path="laporan/:id" element={<SantriReportDetailPage />} />
+          <Route
+            path="profil"
+            element={<ChangePasswordPage embedded />}
+          />
         </Route>
 
         <Route
