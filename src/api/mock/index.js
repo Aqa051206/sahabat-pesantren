@@ -164,6 +164,10 @@ export const auth = {
         id: account.id,
         name: account.name,
         role: account.role,
+        email: account.email,
+        nis: account.nis,
+        telepon_ortu: account.teleponOrtu,
+        username: account.username,
         must_change_password: account.mustChangePassword,
       }),
     }

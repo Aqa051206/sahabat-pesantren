@@ -1,4 +1,4 @@
-import { NavLink, useLocation } from 'react-router-dom'
+import { Link, NavLink, useLocation } from 'react-router-dom'
 import Brand from '../components/Brand'
 import { cn } from '../lib/cn'
 import { USE_MOCK } from '../lib/env'
@@ -14,6 +14,12 @@ function AuthenticatedNavigation({
   onExit,
 }) {
   const { pathname } = useLocation()
+  const profilePath =
+    user?.role === 'santri'
+      ? '/santri/profil'
+      : user?.role === 'pimpinan'
+        ? '/pimpinan/profil'
+        : '/petugas/profil'
 
   const linkClass = ({ isActive }) =>
     cn(
@@ -90,17 +96,23 @@ function AuthenticatedNavigation({
               </div>
             ) : null}
             <div className="flex min-w-0 items-center gap-2.5 rounded-2xl bg-white/10 p-2.5">
-              <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#ff7a59] text-sm font-extrabold text-[#12372a]">
-                {user?.name?.trim()?.charAt(0)?.toLocaleUpperCase() ?? 'P'}
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-xs font-bold leading-4 text-white">
-                  {user?.name}
+              <Link
+                to={profilePath}
+                aria-label="Buka profil"
+                className="flex min-w-0 flex-1 items-center gap-2.5 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              >
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#ff7a59] text-sm font-extrabold text-[#12372a]">
+                  {user?.name?.trim()?.charAt(0)?.toLocaleUpperCase() ?? 'P'}
                 </span>
-                <span className="block truncate text-[10px] leading-4 text-white/55">
-                  {roleLabel}
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-xs font-bold leading-4 text-white">
+                    {user?.name}
+                  </span>
+                  <span className="block truncate text-[10px] leading-4 text-white/55">
+                    {roleLabel}
+                  </span>
                 </span>
-              </span>
+              </Link>
               <button
                 type="button"
                 onClick={onExit}

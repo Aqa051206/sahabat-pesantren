@@ -3,6 +3,13 @@ import { Link } from 'react-router-dom'
 import Brand from '../components/Brand'
 
 function AuthenticatedHeader({ homePath, user, roleLabel, exitLabel, onExit }) {
+  const profilePath =
+    user?.role === 'santri'
+      ? '/santri/profil'
+      : user?.role === 'pimpinan'
+        ? '/pimpinan/profil'
+        : '/petugas/profil'
+
   return (
     <header className="sticky top-0 z-40 border-b border-[#d3e2d8] bg-[#edf6f0]/95 backdrop-blur lg:hidden">
       <div className="flex min-h-[68px] w-full items-center justify-between gap-3 px-4 sm:px-6 lg:min-h-[76px] lg:px-8">
@@ -14,14 +21,18 @@ function AuthenticatedHeader({ homePath, user, roleLabel, exitLabel, onExit }) {
           <Brand className="gap-2" showText={false} />
         </Link>
 
-        <div className="min-w-0 flex-1 lg:flex-none">
+        <Link
+          to={profilePath}
+          aria-label="Buka profil"
+          className="min-w-0 flex-1 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0d352a] lg:flex-none"
+        >
           <div className="min-w-0 text-right">
             <p className="max-w-60 truncate text-xs font-bold text-[#163b2f]">
               {user?.name}
             </p>
             <p className="text-[10px] font-medium text-[#718078]">{roleLabel}</p>
           </div>
-        </div>
+        </Link>
 
         <button
           type="button"

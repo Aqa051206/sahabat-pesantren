@@ -7,6 +7,10 @@ export const adaptUser = (raw) =>
         id: raw.id,
         name: raw.name,
         role: raw.role,
+        email: raw.email ?? null,
+        nis: raw.nis ?? raw.santri?.nis ?? null,
+        phone: raw.telepon_ortu ?? raw.santri?.telepon_ortu ?? raw.phone ?? null,
+        username: raw.username ?? null,
         mustChangePassword:
           raw.role === 'pengurus' ? false : Boolean(raw.must_change_password),
       }

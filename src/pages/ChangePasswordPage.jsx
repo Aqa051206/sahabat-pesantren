@@ -11,7 +11,7 @@ import Card from '../components/ui/Card'
 import Input from '../components/ui/Input'
 import { useToast } from '../components/ui/toast-context'
 import { useAuth } from '../features/auth/auth-context'
-import { homeForRole, ROLE_LABELS } from '../lib/constants'
+import { homeForRole } from '../lib/constants'
 
 const schema = z
   .object({
@@ -35,7 +35,7 @@ export default function ChangePasswordPage({ embedded = false }) {
   const toast = useToast()
   const navigate = useNavigate()
   const location = useLocation()
-  const isProfile = embedded || location.pathname === '/santri/profil'
+  const isProfile = embedded || location.pathname.endsWith('/profil')
   const [formError, setFormError] = useState(null)
   const [visiblePasswords, setVisiblePasswords] = useState({})
   const [formOpen, setFormOpen] = useState(true)
@@ -162,51 +162,30 @@ export default function ChangePasswordPage({ embedded = false }) {
     </>
   )
 
-  if (isProfile) {
+  if (embedded) {
     return (
-      <div className="mx-auto flex w-full max-w-2xl flex-col gap-5">
-        <header>
-          <h1 className="text-3xl">Profil</h1>
-          <p className="mt-1 text-body">Kelola informasi akun dan kata sandimu.</p>
-        </header>
-        <Card className="p-5 sm:p-6">
-          <div className="flex items-center gap-4">
-            <span className="flex size-12 items-center justify-center rounded-full bg-amber/15 text-primary">
-              <KeyRound aria-hidden="true" className="size-6" />
-            </span>
-            <div>
-              <p className="font-semibold text-navy">{user?.name}</p>
-              <p className="text-sm text-body">
-                {ROLE_LABELS[user?.role] ?? 'Pengguna'}
+      <section>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-xl font-semibold text-navy">Ubah kata sandi</h2>
+            {formOpen ? (
+              <p className="mt-1 text-sm text-body">
+                Kata sandi baru harus terdiri dari minimal 8 karakter.
               </p>
-            </div>
+            ) : null}
           </div>
-          <div className="mt-6 border-t border-border pt-5">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h2 className="text-xl font-semibold text-navy">
-                  Ubah kata sandi
-                </h2>
-                {formOpen ? (
-                  <p className="mt-1 text-sm text-body">
-                    Kata sandi baru harus terdiri dari minimal 8 karakter.
-                  </p>
-                ) : null}
-              </div>
-              {!formOpen ? (
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setFormOpen(true)}
-                >
-                  Ubah kata sandi
-                </Button>
-              ) : null}
-            </div>
-            {formOpen ? formContent : null}
-          </div>
-        </Card>
-      </div>
+          {!formOpen ? (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setFormOpen(true)}
+            >
+              Ubah kata sandi
+            </Button>
+          ) : null}
+        </div>
+        {formOpen ? formContent : null}
+      </section>
     )
   }
 
