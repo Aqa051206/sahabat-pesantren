@@ -11,6 +11,9 @@ import {
 } from '../reports/hooks'
 import { ProofLink } from './IdentityRequestStaff'
 
+const IDENTITY_CARD_SURFACE =
+  '!border !border-[#e1e9e2] !shadow-[0_2px_10px_rgba(18,55,42,0.06)]'
+
 // Kartu untuk SANTRI: setujui / tolak permintaan pimpinan.
 export default function IdentityRequestSantri({ report }) {
   const request = report.permintaanIdentitas
@@ -47,9 +50,7 @@ export default function IdentityRequestSantri({ report }) {
 
   return (
     <Card
-      className={
-        pending ? 'border-2 border-primary p-5 sm:p-6' : 'p-5 sm:p-6'
-      }
+      className={`${IDENTITY_CARD_SURFACE} p-5 sm:p-6`}
       aria-live="polite"
     >
       <div className="flex flex-wrap items-center justify-between gap-2">

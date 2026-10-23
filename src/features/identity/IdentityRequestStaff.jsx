@@ -15,6 +15,8 @@ import { formatDateOnly } from '../../lib/formatDate'
 import { useRequestIdentity } from '../reports/hooks'
 
 const PROOF_TYPES = IDENTITY_PROOF_ACCEPT.split(',')
+const IDENTITY_CARD_SURFACE =
+  '!border !border-[#e1e9e2] !shadow-[0_2px_10px_rgba(18,55,42,0.06)]'
 
 export function ProofLink({ request }) {
   if (!request.buktiUrl) return null
@@ -93,7 +95,7 @@ export default function IdentityRequestStaff({ report }) {
   }
 
   return (
-    <Card className="p-5 sm:p-6">
+    <Card className={`${IDENTITY_CARD_SURFACE} p-5 sm:p-6`}>
       <h2 className="flex items-center gap-2 text-xl">
         <ShieldQuestion aria-hidden="true" className="size-5 text-primary" />
         Identitas pelapor

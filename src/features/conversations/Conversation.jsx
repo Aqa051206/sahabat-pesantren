@@ -23,6 +23,8 @@ const schema = z.object({
     .min(1, 'Tulis pesan dulu, ya.')
     .max(1000, 'Pesan terlalu panjang.'),
 })
+const CONVERSATION_CARD_SURFACE =
+  '!border !border-[#e1e9e2] !shadow-[0_2px_10px_rgba(18,55,42,0.06)]'
 
 const sortMessagesOldestFirst = (messages) =>
   messages
@@ -122,7 +124,7 @@ export function Conversation({ id, viewer }) {
   }
 
   return (
-    <Card className="p-5 sm:p-6">
+    <Card className={`${CONVERSATION_CARD_SURFACE} p-5 sm:p-6`}>
       <h2 className="text-xl">Percakapan</h2>
       <p className="mt-0.5 text-sm text-body">
         {viewer === 'santri'
