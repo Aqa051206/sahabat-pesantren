@@ -20,3 +20,18 @@ export const useNotificationSummary = () => {
     retry: retryUnlessClientError,
   })
 }
+
+export const useNotifications = () => {
+  const { user } = useAuth()
+
+  return useQuery({
+    queryKey: notificationKeys.list(),
+    queryFn: () => api.notifications.getList(),
+    enabled: Boolean(user),
+    refetchInterval: 30000,
+    refetchOnWindowFocus: true,
+    staleTime: 15000,
+    placeholderData: (previous) => previous,
+    retry: retryUnlessClientError,
+  })
+}

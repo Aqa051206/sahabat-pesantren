@@ -61,7 +61,7 @@ export const useUpdateIdentity = (id) => {
       }
       queryClient.invalidateQueries({ queryKey: reportKeys.detail(id) })
       queryClient.invalidateQueries({ queryKey: ['reports', 'mine'] })
-      queryClient.invalidateQueries({ queryKey: notificationKeys.summary() })
+      queryClient.invalidateQueries({ queryKey: notificationKeys.all() })
     },
   })
 }
@@ -73,7 +73,7 @@ export const useUpdateStatus = (id) => {
     onSuccess: (report) => {
       queryClient.setQueryData(reportKeys.detail(id), report)
       queryClient.invalidateQueries({ queryKey: ['reports'] })
-      queryClient.invalidateQueries({ queryKey: notificationKeys.summary() })
+      queryClient.invalidateQueries({ queryKey: notificationKeys.all() })
     },
   })
 }
@@ -84,7 +84,7 @@ export const useEscalate = (id) => {
     mutationFn: (payload) => api.reports.escalate(id, payload),
     onSuccess: (report) => {
       queryClient.setQueryData(reportKeys.detail(id), report)
-      queryClient.invalidateQueries({ queryKey: notificationKeys.summary() })
+      queryClient.invalidateQueries({ queryKey: notificationKeys.all() })
     },
   })
 }
@@ -107,7 +107,7 @@ export const useAnswerIdentityRequest = (id) => {
     onSuccess: (report) => {
       queryClient.setQueryData(reportKeys.detail(id), report)
       queryClient.invalidateQueries({ queryKey: ['reports'] })
-      queryClient.invalidateQueries({ queryKey: notificationKeys.summary() })
+      queryClient.invalidateQueries({ queryKey: notificationKeys.all() })
     },
   })
 }

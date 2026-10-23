@@ -54,7 +54,7 @@ export function Conversation({ id, viewer }) {
   useEffect(() => {
     if (!data || markedReadRef.current === id) return
     markedReadRef.current = id
-    queryClient.invalidateQueries({ queryKey: notificationKeys.summary() })
+    queryClient.invalidateQueries({ queryKey: notificationKeys.all() })
   }, [data, id, queryClient])
 
   const {

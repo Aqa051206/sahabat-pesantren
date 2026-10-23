@@ -28,7 +28,7 @@ disebutkan tetap merupakan asumsi sampai dikonfirmasi tim backend.
 ## Notifikasi
 
 - Terverifikasi: `GET /api/v1/notifications/summary` dipakai untuk badge menu
-  Notifikasi dan halaman ringkasan notifikasi.
+  Notifikasi dan total pada halaman Notifikasi.
 - Respons `data` berupa objek. Contoh santri:
 
   ```json
@@ -70,10 +70,29 @@ disebutkan tetap merupakan asumsi sampai dikonfirmasi tim backend.
   `selesai` setelah waktu baca terakhir.
 - `GET /api/v1/reports/{id}` dan `GET /api/v1/reports/{id}/messages` otomatis
   menandai laporan sudah dibaca untuk role yang sedang login. Frontend
-  menginvalidasi ringkasan notifikasi setelah laporan atau pesan dimuat.
-- `GET /api/v1/notifications` tidak dipakai; frontend hanya menampilkan
-  ringkasan kategori.
-- Frontend memantau ringkasan setiap 30 detik dan saat jendela kembali aktif.
+  menginvalidasi ringkasan dan daftar notifikasi setelah laporan atau pesan
+  dimuat.
+- ✅ Terverifikasi (23 Okt 2026): `GET /api/v1/notifications?page=1&per_page=100`
+  mengembalikan `{ message, code, data: { items, meta } }`. `items` sudah
+  hanya berisi notifikasi yang belum dibaca dan diurutkan terbaru.
+- Bentuk item: `{ id, tipe, laporan_id, no_laporan, kategori, waktu,
+  status_baru, pengirim, preview, url }`. `id` numerik dan unik
+  (`laporan_id * 10 + kode kategori`); `status_baru` string/null;
+  `pengirim` berupa `{ id, name, role }` atau null bila identitas santri
+  disembunyikan (adapter mengambil `name`); `waktu` ISO 8601.
+- `tipe ∈ laporan_baru | pesan_baru | status_diubah | permintaan_identitas`.
+  Frontend mengambil semua halaman (`per_page=100`) dan deduplikasi
+  berdasarkan `id`.
+- Jika endpoint daftar mengembalikan `404`, frontend memakai fallback:
+  menurunkan daftar dari `GET /reports/mine` (santri) atau `GET /reports`
+  (pengurus/pimpinan) memakai `santri_dibaca`, `pengurus_dibaca`,
+  `pimpinan_dibaca`, `status_diubah`, `permintaan_identitas`, dan
+  `percakapans`.
+- Halaman Notifikasi menampilkan item individual dan klik langsung membuka
+  detail laporan. Setelah detail/pesan dibuka, ringkasan **dan** daftar
+  notifikasi diinvalidasi.
+- Frontend memantau ringkasan dan daftar notifikasi setiap 30 detik serta
+  saat jendela kembali aktif.
 - Sudah diuji dengan akun asli: kategori laporan baru, pesan baru, status
   berubah, dan permintaan identitas bertambah sesuai aksi dan kembali turun
   setelah laporan/pesan dibaca.

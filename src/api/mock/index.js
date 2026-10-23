@@ -558,6 +558,100 @@ export const notifications = {
       pembaruan: laporanBaru + pesanBaru,
     })
   },
+
+  async getList() {
+    await delay()
+    const user = requireUser()
+    const items = []
+
+    const push = (report, tipe, waktu, extra = {}) => {
+      items.push({
+        id: `${tipe}:${report.id}`,
+        tipe,
+        laporanId: report.id,
+        noLaporan: report.noLaporan,
+        kategori: report.kategori,
+        waktu,
+        ...extra,
+      })
+    }
+
+    const incomingSince = (report, snapshot) =>
+      report.messages
+        .slice(snapshot?.messageCount ?? 0)
+        .filter(
+          (message) =>
+            message.senderId != null &&
+            String(message.senderId) !== String(user.id),
+        )
+
+    if (user.role === 'santri') {
+      reportStore
+        .filter((item) => item.ownerId === user.id)
+        .forEach((report) => {
+          const snapshot = snapshotFor(user, report)
+          const request = report.permintaanIdentitas
+
+          if (
+            request?.status === 'menunggu' &&
+            snapshot?.identityStatus !== 'menunggu'
+          ) {
+            push(report, 'permintaan_identitas', request.createdAt, {
+              pengirim: request.dimintaOleh,
+            })
+          }
+
+          const incoming = incomingSince(report, snapshot)
+          if (incoming.length) {
+            const last = incoming[incoming.length - 1]
+            push(report, 'pesan_baru', last.createdAt, {
+              pengirim: last.senderName,
+              preview: last.body,
+            })
+          }
+
+          if (
+            report.statusChangedAt &&
+            (!snapshot || Date.parse(report.statusChangedAt) > snapshot.readAt)
+          ) {
+            push(report, 'status_diubah', report.statusChangedAt, {
+              statusBaru: report.status,
+            })
+          }
+        })
+    } else {
+      reportStore
+        .filter((item) => canView(user, item))
+        .forEach((report) => {
+          const snapshot = snapshotFor(user, report)
+
+          if (report.status === 'baru' && !snapshot) {
+            push(report, 'laporan_baru', report.createdAt)
+          }
+
+          if (report.status !== 'selesai') {
+            const incoming = incomingSince(report, snapshot)
+            if (incoming.length) {
+              const last = incoming[incoming.length - 1]
+              push(report, 'pesan_baru', last.createdAt, {
+                pengirim: last.senderName,
+                preview: last.body,
+              })
+            }
+          }
+        })
+    }
+
+    items.sort((a, b) => (Date.parse(b.waktu) ?? 0) - (Date.parse(a.waktu) ?? 0))
+
+    return {
+      items,
+      meta: adaptPagination(
+        { current_page: 1, last_page: 1, total: items.length },
+        items.length,
+      ),
+    }
+  },
 }
 
 export const dashboard = {

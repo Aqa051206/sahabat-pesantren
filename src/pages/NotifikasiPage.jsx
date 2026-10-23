@@ -1,26 +1,93 @@
-import { Bell, RefreshCw } from 'lucide-react'
+import {
+  Bell,
+  ChevronRight,
+  FilePlus2,
+  MessageCircle,
+  RefreshCw,
+  ShieldQuestion,
+} from 'lucide-react'
 import { Link } from 'react-router-dom'
-import Badge from '../components/ui/Badge'
 import Button from '../components/ui/Button'
 import Card from '../components/ui/Card'
 import EmptyState from '../components/ui/EmptyState'
 import ErrorState from '../components/ui/ErrorState'
 import Skeleton from '../components/ui/Skeleton'
 import { useAuth } from '../features/auth/auth-context'
-import { getNotificationCategories } from '../features/notifications/categories'
-import { useNotificationSummary } from '../features/notifications/hooks'
+import {
+  CategoryBadge,
+  StatusBadge,
+} from '../features/reports/components/badges'
+import { useNotifications } from '../features/notifications/hooks'
 import { cn } from '../lib/cn'
-import { ROLES, ROLE_LABELS } from '../lib/constants'
+import {
+  ROLES,
+  ROLE_LABELS,
+  STATUS_LABELS,
+} from '../lib/constants'
+import { formatDateOnly } from '../lib/formatDate'
+
+const EMPTY_ITEMS = []
+
+const NOTIFICATION_META = {
+  laporan_baru: {
+    label: 'Laporan baru',
+    icon: FilePlus2,
+    iconClass: 'bg-[#dfeaff] text-[#315d9e]',
+  },
+  pesan_baru: {
+    label: 'Pesan baru',
+    icon: MessageCircle,
+    iconClass: 'bg-[#d9f0e1] text-[#31714d]',
+  },
+  status_diubah: {
+    label: 'Status laporan berubah',
+    icon: RefreshCw,
+    iconClass: 'bg-[#fff0bd] text-[#735b12]',
+  },
+  permintaan_identitas: {
+    label: 'Permintaan melihat identitas',
+    icon: ShieldQuestion,
+    iconClass: 'bg-[#ffddd1] text-[#a74831]',
+  },
+}
+
+const FALLBACK_META = {
+  label: 'Pembaruan',
+  icon: Bell,
+  iconClass: 'bg-band-1 text-body',
+}
+
+function descriptionFor(item, role) {
+  if (item.tipe === 'laporan_baru') {
+    return 'Ada laporan baru yang masuk dan belum kamu buka.'
+  }
+  if (item.tipe === 'pesan_baru') {
+    const from = item.pengirim ? ` dari ${item.pengirim}` : ''
+    return role === ROLES.SANTRI
+      ? `Ada pesan baru${from} pada laporanmu.`
+      : `Ada pesan baru${from} pada laporan ini.`
+  }
+  if (item.tipe === 'status_diubah') {
+    return `Status laporan sekarang ${
+      STATUS_LABELS[item.statusBaru] ?? item.statusBaru ?? 'diperbarui'
+    }.`
+  }
+  if (item.tipe === 'permintaan_identitas') {
+    return `${item.pengirim ?? 'Pimpinan'} meminta izin melihat namamu.`
+  }
+  return 'Ada pembaruan pada laporan ini.'
+}
 
 export default function NotifikasiPage() {
   const { user } = useAuth()
-  const { data, isLoading, isError, isFetching, refetch } =
-    useNotificationSummary()
+  const { data, isLoading, isError, isFetching, refetch } = useNotifications()
 
   const role = user?.role
-  const categories = getNotificationCategories(role, data)
-  const total = Number(data?.total ?? 0)
   const isSantri = role === ROLES.SANTRI
+  const items = data?.items ?? EMPTY_ITEMS
+  const total = Number(data?.meta?.total ?? items.length)
+  const detailPath = (id) =>
+    isSantri ? `/santri/laporan/${id}` : `/petugas/laporan/${id}`
 
   return (
     <div className="flex flex-col gap-5">
@@ -33,7 +100,7 @@ export default function NotifikasiPage() {
             Notifikasi
           </h1>
           <p className="mt-1 text-sm text-body">
-            Ringkasan pembaruan yang perlu kamu periksa.
+            Pembaruan yang belum kamu baca. Klik untuk membuka laporannya.
           </p>
         </div>
         <Button
@@ -51,14 +118,14 @@ export default function NotifikasiPage() {
 
       {isLoading ? (
         <div className="flex flex-col gap-3">
-          <Skeleton className="h-24 w-full rounded-3xl" />
+          <Skeleton className="h-20 w-full rounded-3xl" />
           <Skeleton className="h-24 w-full rounded-3xl" />
           <Skeleton className="h-24 w-full rounded-3xl" />
         </div>
       ) : isError || !data ? (
         <ErrorState
           title="Notifikasi gagal dimuat"
-          message="Coba muat ulang ringkasan notifikasi."
+          message="Coba muat ulang daftar notifikasi."
           onRetry={refetch}
         />
       ) : (
@@ -69,7 +136,9 @@ export default function NotifikasiPage() {
                 <Bell aria-hidden="true" className="size-6" />
               </span>
               <div>
-                <p className="text-sm font-semibold text-body">Total pembaruan</p>
+                <p className="text-sm font-semibold text-body">
+                  Pembaruan belum dibaca
+                </p>
                 <p className="text-3xl font-extrabold leading-none text-navy">
                   {total}
                 </p>
@@ -77,57 +146,72 @@ export default function NotifikasiPage() {
             </div>
             <p className="max-w-md text-sm text-body">
               {total > 0
-                ? isSantri
-                  ? 'Buka laporan atau percakapan terkait untuk menandai notifikasi sudah dibaca.'
-                  : 'Buka detail laporan atau percakapan terkait untuk menandai notifikasi sudah dibaca.'
+                ? 'Buka laporan terkait untuk menandai notifikasi sudah dibaca.'
                 : 'Semua pembaruan sudah kamu baca.'}
             </p>
           </Card>
 
-          {total > 0 ? (
-            <div className="grid gap-3 md:grid-cols-2">
-              {categories.map(
-                ({ key, label, description, icon: Icon, count, to }) => (
-                  <Card
-                    key={key}
-                    className={cn(
-                      'p-5',
-                      count > 0 ? 'border-[#c98269]' : 'border-[#d3e2d8]',
-                    )}
-                  >
-                    <div className="flex items-start justify-between gap-3">
+          {items.length ? (
+            <ul className="flex flex-col gap-3">
+              {items.map((item) => {
+                const meta = NOTIFICATION_META[item.tipe] ?? FALLBACK_META
+                const Icon = meta.icon
+                return (
+                  <li key={item.id}>
+                    <Link
+                      to={detailPath(item.laporanId)}
+                      className="group flex items-start gap-3 rounded-2xl border-2 border-[#91a99a] bg-white p-4 shadow-[0_3px_0_#12372a,0_8px_18px_rgba(18,55,42,0.04)] transition-all hover:-translate-y-0.5 hover:border-[#12372a] hover:shadow-[0_4px_0_#12372a,0_12px_24px_rgba(18,55,42,0.08)]"
+                    >
                       <span
                         className={cn(
-                          'flex size-11 shrink-0 items-center justify-center rounded-2xl',
-                          count > 0
-                            ? 'bg-[#ffddd1] text-[#ba4c30]'
-                            : 'bg-band-1 text-body',
+                          'mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-2xl',
+                          meta.iconClass,
                         )}
                       >
                         <Icon aria-hidden="true" className="size-5" />
                       </span>
-                      <Badge
-                        tone={count > 0 ? 'coral' : 'neutral'}
-                      >
-                        {count > 0 ? `${count} laporan` : 'Tidak ada'}
-                      </Badge>
-                    </div>
-                    <h2 className="mt-3 text-lg font-extrabold text-navy">
-                      {label}
-                    </h2>
-                    <p className="mt-1 text-sm leading-5 text-body">
-                      {description}
-                    </p>
-                    <Link
-                      to={to}
-                      className="mt-3 inline-flex text-sm font-semibold text-primary-hover hover:underline"
-                    >
-                      Buka laporan terkait
+                      <span className="min-w-0 flex-1">
+                        <span className="flex flex-wrap items-center gap-2">
+                          <span className="text-sm font-extrabold text-[#163b2f]">
+                            {meta.label}
+                          </span>
+                          {item.noLaporan ? (
+                            <span className="text-xs font-bold text-[#718078]">
+                              {item.noLaporan}
+                            </span>
+                          ) : null}
+                        </span>
+                        <span className="mt-1 block text-sm text-[#43574d]">
+                          {descriptionFor(item, role)}
+                        </span>
+                        {item.preview ? (
+                          <span
+                            className="mt-1 line-clamp-2 block rounded-xl bg-band-1 px-3 py-2 text-xs text-navy"
+                            data-pre-wrap
+                          >
+                            {item.preview}
+                          </span>
+                        ) : null}
+                        <span className="mt-2 flex flex-wrap items-center gap-2">
+                          {item.kategori ? (
+                            <CategoryBadge kategori={item.kategori} />
+                          ) : null}
+                          {item.tipe === 'status_diubah' && item.statusBaru ? (
+                            <StatusBadge status={item.statusBaru} />
+                          ) : null}
+                          <span className="text-[10px] text-[#718078]">
+                            {formatDateOnly(item.waktu)}
+                          </span>
+                        </span>
+                      </span>
+                      <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full bg-[#e9f4ed] text-[#315944] transition-colors group-hover:bg-[#d9ecdf]">
+                        <ChevronRight aria-hidden="true" className="size-4" />
+                      </span>
                     </Link>
-                  </Card>
-                ),
-              )}
-            </div>
+                  </li>
+                )
+              })}
+            </ul>
           ) : (
             <EmptyState
               icon={Bell}
@@ -137,9 +221,8 @@ export default function NotifikasiPage() {
           )}
 
           <p className="text-xs text-body">
-            Notifikasi dihitung ulang saat halaman dimuat dan setiap 30 detik.
-            Membuka detail laporan atau daftar pesan akan menandainya sudah
-            dibaca.
+            Notifikasi diperbarui otomatis setiap 30 detik. Membuka detail
+            laporan atau percakapan akan menandainya sudah dibaca.
           </p>
         </>
       )}

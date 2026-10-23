@@ -69,7 +69,7 @@ export default function StaffReportDetailPage() {
 
   useEffect(() => {
     if (!dataUpdatedAt) return
-    queryClient.invalidateQueries({ queryKey: notificationKeys.summary() })
+    queryClient.invalidateQueries({ queryKey: notificationKeys.all() })
   }, [dataUpdatedAt, queryClient])
 
   const [escalateOpen, setEscalateOpen] = useState(false)

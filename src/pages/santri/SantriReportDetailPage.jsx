@@ -34,7 +34,7 @@ export default function SantriReportDetailPage() {
 
   useEffect(() => {
     if (!dataUpdatedAt) return
-    queryClient.invalidateQueries({ queryKey: notificationKeys.summary() })
+    queryClient.invalidateQueries({ queryKey: notificationKeys.all() })
   }, [dataUpdatedAt, queryClient])
 
   if (isLoading) {

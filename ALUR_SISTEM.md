@@ -315,16 +315,22 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-  A["Aplikasi aktif"] --> B["Ringkasan notifikasi<br/>setiap 30 detik + saat tab kembali fokus"]
+  A["Aplikasi aktif"] --> B["Ringkasan + daftar notifikasi<br/>setiap 30 detik + saat tab kembali fokus"]
   B --> C["GET /notifications/summary"]
-  C --> D{"Peran"}
-  D -- "Santri" --> E["permintaan_identitas<br/>pesan_baru<br/>status_diubah"]
-  D -- "Pengurus / Pimpinan" --> F["laporan_baru<br/>pesan_baru"]
-  E --> G["Badge menu + halaman Notifikasi"]
-  F --> G
-  G --> H["Buka detail laporan atau percakapan"]
-  H --> I["Server menandai sudah dibaca"]
-  I --> J["Ringkasan diinvalidasi, badge turun"]
+  B --> D["GET /notifications"]
+  D --> E{"Endpoint tersedia?"}
+  E -- "Ya" --> F["Item notifikasi dari server"]
+  E -- "404" --> G["Turunkan dari /reports/mine<br/>atau /reports + waktu baca"]
+  C --> H{"Peran"}
+  H -- "Santri" --> I["permintaan_identitas<br/>pesan_baru<br/>status_diubah"]
+  H -- "Pengurus / Pimpinan" --> J["laporan_baru<br/>pesan_baru"]
+  I --> K["Badge menu + halaman Notifikasi"]
+  J --> K
+  F --> K
+  G --> K
+  K --> L["Klik item menuju detail laporan"]
+  L --> M["Server menandai sudah dibaca"]
+  M --> N["Ringkasan dan daftar diinvalidasi, badge turun"]
 ```
 
 | Peran | Kategori | Pemicu |
@@ -337,6 +343,8 @@ flowchart TD
 
 `pembaruan` adalah jumlah seluruh kategori; satu laporan dapat terhitung di lebih dari satu kategori.
 
+Halaman Notifikasi menampilkan satu item per kategori per laporan (mis. satu laporan bisa muncul sebagai "pesan baru" dan "status berubah"). Setiap item langsung menuju detail laporan sesuai peran: `/santri/laporan/{id}` untuk santri, `/petugas/laporan/{id}` untuk pengurus/pimpinan. `GET /notifications` sudah tersedia dan mengembalikan hanya item belum dibaca. Bila endpoint mengembalikan `404`, frontend memakai fallback dengan menurunkan daftar dari data laporan dan waktu baca per peran (`santri_dibaca`, `pengurus_dibaca`, `pimpinan_dibaca`).
+
 ## 10. Peta route dan hak akses
 
 | Route | Akses | Halaman |
@@ -348,17 +356,17 @@ flowchart TD
 | `/santri/buat-laporan` | Santri | Buat laporan |
 | `/santri/laporan-saya` | Santri | Daftar laporan miliknya |
 | `/santri/laporan/:id` | Santri (pemilik) | Detail laporan |
-| `/santri/notifikasi` | Santri | Ringkasan notifikasi |
+| `/santri/notifikasi` | Santri | Daftar notifikasi |
 | `/santri/profil` | Santri | Profil |
 | `/petugas` | Pengurus, Pimpinan | Daftar laporan |
 | `/petugas/dashboard` | Pengurus | Dashboard pengurus |
 | `/petugas/laporan/:id` | Pengurus, Pimpinan | Detail laporan |
-| `/petugas/notifikasi` | Pengurus, Pimpinan | Ringkasan notifikasi |
+| `/petugas/notifikasi` | Pengurus, Pimpinan | Daftar notifikasi |
 | `/petugas/profil` | Pengurus, Pimpinan | Profil |
 | `/pimpinan` | Pimpinan | Redirect ke `/pimpinan/dashboard` |
 | `/pimpinan/dashboard` | Pimpinan | Dashboard ringkasan |
 | `/pimpinan/akun` | Pimpinan | Kelola akun, impor/ekspor santri |
-| `/pimpinan/notifikasi` | Pimpinan | Ringkasan notifikasi |
+| `/pimpinan/notifikasi` | Pimpinan | Daftar notifikasi |
 | `/pimpinan/profil` | Pimpinan | Profil |
 | `/403` | Publik | Akses ditolak |
 | `*` | Publik | Halaman tidak ditemukan |
@@ -385,6 +393,7 @@ Base URL pemanggilan: `VITE_API_URL + "/api"`. Tabel di bawah memakai jalur rela
 | Pesan | `POST /reports/{id}/messages` | Pemilik / petugas berhak | Kirim pesan |
 | Catatan | `POST /reports/{id}/notes` | Pengurus, Pimpinan | Tambah catatan internal |
 | Notifikasi | `GET /notifications/summary` | Login | Ringkasan badge notifikasi |
+| Notifikasi | `GET /notifications` | Login | Daftar item notifikasi belum dibaca (fallback bila `404`) |
 | Dashboard | `GET /dashboard/summary` | Pimpinan | Ringkasan dashboard |
 | Admin | `GET /admin/santri/template` | Pimpinan | Template impor (tersedia di service; UI saat ini membuat template lokal) |
 | Admin | `POST /admin/santri/import` | Pimpinan | Pratinjau / impor santri |
@@ -416,5 +425,5 @@ Catatan: `API_ASSUMPTIONS.md` menuliskan sebagian endpoint dengan prefix `/api/v
 | Alur petugas | `src/pages/staff/StaffReportListPage.jsx`, `StaffReportDetailPage.jsx` |
 | Alur pimpinan | `src/pages/pimpinan/DashboardPage.jsx`, `AccountsPage.jsx` |
 | Identitas | `src/features/identity/IdentityRequestStaff.jsx`, `IdentityRequestSantri.jsx` |
-| Notifikasi | `src/features/notifications/hooks.js`, `categories.js`, `src/pages/NotifikasiPage.jsx` |
+| Notifikasi | `src/features/notifications/hooks.js`, `queryKeys.js`, `src/api/services/notifications.js`, `src/pages/NotifikasiPage.jsx` |
 | Kontrak API | `API_ASSUMPTIONS.md`, `src/api/services/*.js`, `src/api/mock/index.js` |
