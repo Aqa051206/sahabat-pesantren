@@ -76,7 +76,10 @@ function AccountsTab({ role }) {
         email: form.email,
         password: form.password,
       })
-      toast.showToast(`Akun ${ROLE_LABELS[role].toLowerCase()} dibuat.`, 'success')
+      toast.showToast(
+        `Akun ${ROLE_LABELS[role].toLowerCase()} dibuat. Pemilik akun wajib mengganti kata sandi saat pertama masuk.`,
+        'success',
+      )
       setOpen(false)
       setShowPassword(false)
       setForm({ name: '', email: '', password: '' })
@@ -384,8 +387,8 @@ function ImportTab() {
           wali, dan password. NIS digunakan untuk memperbarui data yang sudah
           ada atau membuat akun baru; jangan ubah NIS jika ingin memperbarui
           akun yang sama. Untuk akun lama, password boleh dikosongkan agar
-          tetap memakai password sebelumnya. Akun baru wajib diisi password
-          minimal 8 karakter. Maksimal 500 baris dan 5 MB.
+          tetap memakai password sebelumnya. Akun baru ada sandi default yaitu 
+          <b> 12345678</b>
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <Button

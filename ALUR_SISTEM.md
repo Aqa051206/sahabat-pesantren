@@ -70,7 +70,7 @@ flowchart TD
   B -- "Tidak" --> C["Halaman publik /"]
   C --> D["/login"]
   B -- "Ya" --> E["RedirectIfAuthenticated"]
-  E --> E1{"mustChangePassword<br/>dan bukan santri?"}
+  E --> E1{"mustChangePassword?"}
   E1 -- "Ya" --> M["/ganti-password"]
   E1 -- "Tidak" --> F["Langsung ke halaman awal sesuai peran"]
 
@@ -80,7 +80,7 @@ flowchart TD
   I -- "Tidak" --> J["Tampilkan pesan 401 / 403 / 422"]
   J --> G
   I -- "Ya" --> K["Simpan token + user di localStorage"]
-  K --> L{"mustChangePassword<br/>dan bukan santri?"}
+  K --> L{"mustChangePassword?"}
   L -- "Ya" --> M
   L -- "Tidak" --> N{"Peran?"}
   N -- "santri" --> O["/santri/buat-laporan"]
@@ -102,8 +102,8 @@ Perilaku sesi:
 
 - Satu browser memakai satu akun; sesi disinkronkan antar-tab lewat `localStorage`.
 - `RequireAuth` menjaga halaman berdasarkan login, peran, dan kewajiban ganti kata sandi.
-- Santri **tidak** dipaksa ganti kata sandi saat login; perubahan dilakukan dari menu Profil.
-- Pengurus/pimpinan dengan `mustChangePassword` diarahkan ke `/ganti-password`.
+- Semua peran, termasuk santri, yang memiliki `mustChangePassword` diarahkan ke `/ganti-password` dan tidak bisa membuka halaman lain sampai kata sandi diganti.
+- Akun baru (pengurus buatan pimpinan maupun santri hasil impor) diberi `must_change_password: true`, sehingga pemilik akun wajib mengganti kata sandi awal saat pertama masuk.
 - Respons `401` otomatis menghapus sesi dan mengarahkan ke `/login`.
 - Respons `403` ditampilkan sebagai akses ditolak, tanpa membocorkan apakah data ada.
 

@@ -8,7 +8,7 @@ import { z } from 'zod'
 import Brand from '../components/Brand'
 import DemoBanner from '../components/DemoBanner'
 import { useAuth } from '../features/auth/auth-context'
-import { homeForRole, ROLES } from '../lib/constants'
+import { homeForRole } from '../lib/constants'
 import { USE_MOCK } from '../lib/env'
 
 const schema = z.object({
@@ -68,10 +68,7 @@ export default function LoginPage() {
     try {
       const loggedIn = await login(values)
       await new Promise((resolve) => setTimeout(resolve, 1200))
-      if (
-        loggedIn.mustChangePassword &&
-        loggedIn.role !== ROLES.SANTRI
-      ) {
+      if (loggedIn.mustChangePassword) {
         navigate('/ganti-password', { replace: true })
       } else {
         navigate(homeForRole(loggedIn.role), { replace: true })

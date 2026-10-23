@@ -1,5 +1,4 @@
 import { Navigate, useLocation } from 'react-router-dom'
-import { ROLES } from '../../lib/constants'
 import { useAuth } from './auth-context'
 
 export function RequireAuth({ roles, children }) {
@@ -10,11 +9,7 @@ export function RequireAuth({ roles, children }) {
     return <Navigate to="/login" replace />
   }
 
-  if (
-    user.mustChangePassword &&
-    user.role !== ROLES.SANTRI &&
-    location.pathname !== '/ganti-password'
-  ) {
+  if (user.mustChangePassword && location.pathname !== '/ganti-password') {
     return <Navigate to="/ganti-password" replace />
   }
 

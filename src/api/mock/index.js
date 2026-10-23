@@ -825,7 +825,7 @@ export const admin = {
           teleponOrtu: row.teleponOrtu,
           role: 'santri',
           active: true,
-          mustChangePassword: false,
+          mustChangePassword: true,
         })
         created += 1
       }
@@ -930,7 +930,7 @@ export const admin = {
       name: payload.name,
       role: 'pengurus',
       active: true,
-      mustChangePassword: false,
+      mustChangePassword: true,
     }
     accounts.push(account)
     return adaptAccount({

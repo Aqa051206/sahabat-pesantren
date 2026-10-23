@@ -210,17 +210,20 @@ impor, import harus mengizinkan password kosong bila NIS sudah terdaftar
 (password lama tidak berubah), tetapi mewajibkan password minimal 8 karakter
 untuk NIS baru. Validasi email harus mengizinkan email milik akun yang sedang
 diperbarui, namun tetap menolak email yang dipakai akun lain. Santri yang
-tidak tercantum tidak dihapus atau dinonaktifkan.
+tidak tercantum tidak dihapus atau dinonaktifkan. Akun santri yang baru dibuat
+lewat impor harus diberi `must_change_password: true`.
 
 ## Kata sandi
 
 Frontend mengizinkan kata sandi baru minimal 8 karakter dan menyediakan
-tampilkan/sembunyikan untuk kolom kata sandi. Santri tidak lagi dipaksa
-mengubah kata sandi setelah login; perubahan dilakukan dari menu Profil.
-Endpoint `/auth/password` diharapkan menerima field `current_password`,
-`password`, dan `password_confirmation`. Validasi minimum password adalah
-8 karakter. Backend impor juga perlu menonaktifkan flag wajib ganti kata
-sandi untuk akun santri baru.
+tampilkan/sembunyikan untuk kolom kata sandi. Semua peran (termasuk santri)
+yang memiliki `must_change_password: true` diarahkan ke `/ganti-password`
+sebelum bisa memakai halaman lain. Akun baru buatan pimpinan dan akun santri
+baru hasil impor wajib memakai flag ini agar pemilik akun mengganti kata sandi
+awal saat pertama masuk. Endpoint `/auth/password` diharapkan menerima field
+`current_password`, `password`, dan `password_confirmation`. Validasi minimum
+password adalah 8 karakter, dan respons sukses harus membuat backend
+menonaktifkan `must_change_password` untuk akun tersebut.
 
 ## Akun petugas
 
@@ -229,8 +232,8 @@ dan ubah status belum tercantum di kontrak. Frontend memakai:
 
 - ⚠️ `GET /api/v1/admin/accounts` — `?q=&role=&active=` → `{ data: [...], meta }`
 - `POST /api/v1/admin/accounts` — `{ name, email, password }`; backend menetapkan
-  role `pengurus`, status aktif, dan sebaiknya `must_change_password: false`
-  agar akun pengurus tidak diwajibkan mengganti kata sandi saat login.
+  role `pengurus`, status aktif, dan `must_change_password: true` agar pemilik
+  akun baru wajib mengganti kata sandi awal saat pertama masuk.
 - ⚠️ `PATCH /api/v1/admin/accounts/{id}/status` — `{ active }`
 
 Field akun: `{ id, name, email, role, is_active, must_change_password }`.

@@ -11,8 +11,7 @@ export const adaptUser = (raw) =>
         nis: raw.nis ?? raw.santri?.nis ?? null,
         phone: raw.telepon_ortu ?? raw.santri?.telepon_ortu ?? raw.phone ?? null,
         username: raw.username ?? null,
-        mustChangePassword:
-          raw.role === 'pengurus' ? false : Boolean(raw.must_change_password),
+        mustChangePassword: Boolean(raw.must_change_password),
       }
     : null
 
