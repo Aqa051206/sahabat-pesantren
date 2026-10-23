@@ -193,7 +193,7 @@ export default function MyReportsPage() {
             {stats.map(({ label, value, icon: Icon, className, iconColor }) => (
               <article
                 key={label}
-                className={`min-h-32 rounded-2xl p-4 shadow-[0_8px_22px_rgba(35,69,48,0.04)] ${className}`}
+                className={`min-h-32 rounded-2xl border border-[#e1e9e2] p-4 shadow-[0_2px_10px_rgba(18,55,42,0.06)] ${className}`}
               >
                 <span className="flex size-8 items-center justify-center rounded-lg bg-white/80">
                   <Icon aria-hidden="true" className={`size-4 ${iconColor}`} />
@@ -270,7 +270,7 @@ export default function MyReportsPage() {
                     <li key={report.id}>
                       <Link
                         to={`/santri/laporan/${report.id}`}
-                        className={`group flex items-center justify-between gap-3 rounded-2xl border-2 border-[#91a99a] p-4 shadow-[0_3px_0_#12372a,0_8px_18px_rgba(18,55,42,0.04)] transition-all hover:-translate-y-0.5 hover:border-[#12372a] hover:shadow-[0_4px_0_#12372a,0_12px_24px_rgba(18,55,42,0.08)] ${
+                        className={`group flex items-center justify-between gap-3 rounded-2xl border border-[#e1e9e2] p-4 shadow-[0_2px_10px_rgba(18,55,42,0.06)] transition-all hover:-translate-y-0.5 hover:border-[#cbd9ce] hover:shadow-[0_4px_14px_rgba(18,55,42,0.08)] ${
                           hasIdentityRequest ? 'bg-[#fff9e5]' : 'bg-white'
                         }`}
                       >

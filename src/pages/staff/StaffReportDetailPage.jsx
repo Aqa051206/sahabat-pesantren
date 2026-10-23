@@ -39,6 +39,9 @@ import {
 import { displayReporter } from '../../lib/displayReporter'
 import { formatDateOnly } from '../../lib/formatDate'
 
+const DETAIL_CARD_SURFACE =
+  '!border !border-[#e1e9e2] !shadow-[0_2px_10px_rgba(18,55,42,0.06)]'
+
 function InfoRow({ label, children }) {
   return (
     <div className="flex flex-col gap-0.5">
@@ -170,7 +173,7 @@ export default function StaffReportDetailPage() {
         Kembali ke daftar laporan
       </Link>
 
-      <Card className="p-5 sm:p-6">
+      <Card className={`${DETAIL_CARD_SURFACE} p-5 sm:p-6`}>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <span className="font-sans text-2xl font-semibold text-primary">
             {report.noLaporan}
@@ -217,7 +220,7 @@ export default function StaffReportDetailPage() {
         ) : null}
       </Card>
 
-      <Card className="p-5 sm:p-6">
+      <Card className={`${DETAIL_CARD_SURFACE} p-5 sm:p-6`}>
         <h2 className="text-xl">Tindakan</h2>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <Select
@@ -247,7 +250,7 @@ export default function StaffReportDetailPage() {
 
       <Conversation id={id} viewer="petugas" />
 
-      <Card className="p-5 sm:p-6">
+      <Card className={`${DETAIL_CARD_SURFACE} p-5 sm:p-6`}>
         <h2 className="flex items-center gap-2 text-xl">
           <StickyNote aria-hidden="true" className="size-5 text-primary" />
           Catatan internal

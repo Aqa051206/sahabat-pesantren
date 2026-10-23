@@ -19,7 +19,7 @@ import { cn } from '../../lib/cn'
 function StatCard({ icon: Icon, label, value, tone = 'default', hint }) {
   return (
     <div className={cn(
-      'rounded-[20px] p-4 shadow-[0_8px_24px_rgba(18,55,42,0.06)]',
+      'rounded-[20px] border border-[#e1e9e2] p-4 shadow-[0_2px_10px_rgba(18,55,42,0.06)]',
       tone === 'danger' ? 'bg-report-coral' : 'bg-report-blue',
     )}>
       <div className="flex flex-col items-start">
@@ -46,7 +46,7 @@ function StatCard({ icon: Icon, label, value, tone = 'default', hint }) {
 function Breakdown({ title, entries }) {
   const total = entries.reduce((sum, [, count]) => sum + count, 0)
   return (
-    <div className="rounded-3xl bg-white p-5 shadow-[0_8px_24px_rgba(18,55,42,0.06)]">
+    <div className="rounded-3xl border border-[#e1e9e2] bg-white p-5 shadow-[0_2px_10px_rgba(18,55,42,0.06)]">
       <h2 className="text-lg font-semibold text-navy">{title}</h2>
       <ul className="mt-3 flex flex-col gap-3">
         {entries.map(([key, count]) => {
@@ -135,7 +135,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-4">
-        <div className="rounded-3xl bg-white p-5 shadow-[0_8px_24px_rgba(18,55,42,0.06)]">
+        <div className="rounded-3xl border border-[#e1e9e2] bg-white p-5 shadow-[0_2px_10px_rgba(18,55,42,0.06)]">
           <div className="flex items-center gap-2">
             <BarChart3 aria-hidden="true" className="size-5 text-primary" />
             <h2 className="text-lg font-semibold text-navy">Per status</h2>
@@ -144,7 +144,7 @@ export default function DashboardPage() {
             {statusEntries.map((entry) => (
               <div
                 key={entry.value}
-                className="flex items-center justify-between gap-3 rounded-2xl bg-band-1 p-4"
+                className="flex items-center justify-between gap-3 rounded-2xl border border-[#e1e9e2] bg-band-1 p-4"
               >
                 <StatusBadge status={entry.value} />
                 <span className="text-lg font-semibold text-navy">

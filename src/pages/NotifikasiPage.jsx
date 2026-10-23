@@ -27,6 +27,8 @@ import {
 import { formatDateOnly } from '../lib/formatDate'
 
 const EMPTY_ITEMS = []
+const NOTIFICATION_CARD_SURFACE =
+  '!border !border-[#e1e9e2] !shadow-[0_2px_10px_rgba(18,55,42,0.06)]'
 
 const NOTIFICATION_META = {
   laporan_baru: {
@@ -130,7 +132,9 @@ export default function NotifikasiPage() {
         />
       ) : (
         <>
-          <Card className="flex flex-wrap items-center justify-between gap-4 p-5 sm:p-6">
+          <Card
+            className={`${NOTIFICATION_CARD_SURFACE} flex flex-wrap items-center justify-between gap-4 p-5 sm:p-6`}
+          >
             <div className="flex items-center gap-3">
               <span className="flex size-12 items-center justify-center rounded-2xl bg-[#ffd166] text-[#163b2f]">
                 <Bell aria-hidden="true" className="size-6" />
@@ -160,7 +164,7 @@ export default function NotifikasiPage() {
                   <li key={item.id}>
                     <Link
                       to={detailPath(item.laporanId)}
-                      className="group flex items-start gap-3 rounded-2xl border-2 border-[#91a99a] bg-white p-4 shadow-[0_3px_0_#12372a,0_8px_18px_rgba(18,55,42,0.04)] transition-all hover:-translate-y-0.5 hover:border-[#12372a] hover:shadow-[0_4px_0_#12372a,0_12px_24px_rgba(18,55,42,0.08)]"
+                      className="group flex items-start gap-3 rounded-2xl border border-[#e1e9e2] bg-white p-4 shadow-[0_2px_10px_rgba(18,55,42,0.06)] transition-all hover:-translate-y-0.5 hover:border-[#cbd9ce] hover:shadow-[0_4px_14px_rgba(18,55,42,0.08)]"
                     >
                       <span
                         className={cn(

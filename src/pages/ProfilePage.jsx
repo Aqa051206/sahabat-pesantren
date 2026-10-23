@@ -3,6 +3,9 @@ import ChangePasswordPage from './ChangePasswordPage'
 import { useAuth } from '../features/auth/auth-context'
 import { ROLE_LABELS } from '../lib/constants'
 
+const PROFILE_CARD_SURFACE =
+  '!border !border-[#e1e9e2] !shadow-[0_2px_10px_rgba(18,55,42,0.06)]'
+
 export default function ProfilePage() {
   const { user } = useAuth()
   const fields = [
@@ -29,7 +32,7 @@ export default function ProfilePage() {
         <p className="mt-1 text-body">Informasi akun dan pengaturan kata sandi.</p>
       </header>
 
-      <Card className="p-5 sm:p-6">
+      <Card className={`${PROFILE_CARD_SURFACE} p-5 sm:p-6`}>
         <h2 className="text-xl font-semibold text-navy">Data pengguna</h2>
         <dl className="mt-4 divide-y divide-border">
           {fields.map(({ label, value }) => (
@@ -46,7 +49,7 @@ export default function ProfilePage() {
         </dl>
       </Card>
 
-      <Card className="p-5 sm:p-6">
+      <Card className={`${PROFILE_CARD_SURFACE} p-5 sm:p-6`}>
         <ChangePasswordPage embedded />
       </Card>
     </div>

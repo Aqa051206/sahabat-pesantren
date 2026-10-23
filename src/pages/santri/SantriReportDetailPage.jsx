@@ -18,6 +18,9 @@ import { notificationKeys } from '../../features/notifications/queryKeys'
 import { useReport, useUpdateIdentity } from '../../features/reports/hooks'
 import { formatDateOnly } from '../../lib/formatDate'
 
+const DETAIL_CARD_SURFACE =
+  '!border !border-[#e1e9e2] !shadow-[0_2px_10px_rgba(18,55,42,0.06)]'
+
 export default function SantriReportDetailPage() {
   const { id } = useParams()
   const {
@@ -94,7 +97,7 @@ export default function SantriReportDetailPage() {
         Kembali ke Laporan Saya
       </Link>
 
-      <Card className="p-5 sm:p-6">
+      <Card className={`${DETAIL_CARD_SURFACE} p-5 sm:p-6`}>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <span className="font-sans text-2xl font-semibold text-primary">
             {report.noLaporan}
@@ -114,7 +117,7 @@ export default function SantriReportDetailPage() {
 
       <IdentityRequestSantri report={report} />
 
-      <Card className="p-5 sm:p-6">
+      <Card className={`${DETAIL_CARD_SURFACE} p-5 sm:p-6`}>
         <Switch
           id="identity-toggle"
           label="Tampilkan namaku ke petugas"

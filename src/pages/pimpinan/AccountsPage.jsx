@@ -38,6 +38,8 @@ const ACTIVE_OPTIONS = [
   { value: 'false', label: 'Nonaktif' },
 ]
 
+const ACCOUNT_CARD_SURFACE =
+  '!border !border-[#e1e9e2] !shadow-[0_2px_10px_rgba(18,55,42,0.06)]'
 const ACCEPTED_EXT = ['.xlsx']
 
 function AccountsTab({ role }) {
@@ -109,7 +111,7 @@ function AccountsTab({ role }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <Card className="p-4">
+      <Card className={`${ACCOUNT_CARD_SURFACE} p-4`}>
         <div className="grid gap-3 sm:grid-cols-2">
           <Input
             id={`akun-cari-${role}`}
@@ -154,7 +156,9 @@ function AccountsTab({ role }) {
         <ul className="flex flex-col gap-3">
           {visibleAccounts.map((account) => (
             <li key={account.id}>
-              <Card className="flex flex-wrap items-center justify-between gap-3 p-4">
+              <Card
+                className={`${ACCOUNT_CARD_SURFACE} flex flex-wrap items-center justify-between gap-3 p-4`}
+              >
                 <div className="flex items-center gap-3">
                   <span className="flex size-10 items-center justify-center rounded-2xl bg-amber/15 text-primary">
                     <Users aria-hidden="true" className="size-5" />
@@ -200,7 +204,7 @@ function AccountsTab({ role }) {
           ))}
         </ul>
       ) : (
-        <Card className="px-6 py-10 text-center text-sm text-body">
+        <Card className={`${ACCOUNT_CARD_SURFACE} px-6 py-10 text-center text-sm text-body`}>
           Tidak ada akun yang cocok.
         </Card>
       )}
