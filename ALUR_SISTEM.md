@@ -211,8 +211,8 @@ flowchart TD
   M --> P["Tujuan eskalasi tercatat"]
 ```
 
-- Pengurus tidak melihat kartu permintaan identitas; data itu hanya untuk pimpinan dan pelapor.
-- Nama pelapor hanya tampil jika santri menyalakan `tampilkan_identitas`. Selain itu UI menampilkan `Pelapor (identitas disembunyikan)`.
+- Pengurus tidak melihat kartu permintaan identitas; data itu hanya untuk pimpinan dan pelapor. Backend juga tidak boleh mengirim field `permintaan_identitas` kepada pengurus.
+- Nama pelapor tampil jika santri menyalakan `tampilkan_identitas`, atau untuk pimpinan jika `permintaan_identitas` berstatus `disetujui`. Selain itu UI menampilkan `Pelapor (identitas disembunyikan)`.
 - Daftar menandai laporan yang melewati `batas_klarifikasi` sebagai **Lewat batas**. Ini indikator visual, bukan pembatasan otomatis.
 - Catatan internal hanya dapat dibaca dan ditulis oleh petugas (pengurus/pimpinan).
 
@@ -412,7 +412,7 @@ Catatan: `API_ASSUMPTIONS.md` menuliskan sebagian endpoint dengan prefix `/api/v
 - Tanggal pada UI petugas ditampilkan tanpa jam.
 - Isi laporan dan draf tidak disimpan di browser; hanya token sesi yang disimpan di `localStorage`.
 - Semua permintaan API mengirim token `Bearer`; respons `401` memicu logout otomatis.
-- CSP default membatasi koneksi ke `'self'`; origin API harus ditambahkan ke `connect-src` sebelum memakai API lintas origin.
+- CSP membatasi koneksi ke `'self'` dan origin API produksi yang tercantum di `connect-src`; perbarui daftar itu bila origin API berubah.
 
 ## 13. Rujukan kode
 

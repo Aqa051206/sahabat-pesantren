@@ -10,7 +10,7 @@ import {
   Users,
   XCircle,
 } from 'lucide-react'
-import { useRef, useState } from 'react'
+import { useDeferredValue, useRef, useState } from 'react'
 import Button from '../../components/ui/Button'
 import Card from '../../components/ui/Card'
 import ErrorState from '../../components/ui/ErrorState'
@@ -45,13 +45,10 @@ const ACCEPTED_EXT = ['.xlsx']
 function AccountsTab({ role }) {
   const toast = useToast()
   const [filters, setFilters] = useState({ q: '', active: '' })
-  const deferred = filters
-  const { data, isLoading, isError, refetch } = useAccounts({
-    ...deferred,
-    role,
-  })
+  const deferredQuery = useDeferredValue(filters.q)
+  const { data, isLoading, isError, refetch } = useAccounts({ role })
   const visibleAccounts = (data?.items ?? []).filter((account) => {
-    const query = filters.q.trim().toLocaleLowerCase()
+    const query = deferredQuery.trim().toLocaleLowerCase()
     const matchesQuery =
       !query ||
       [account.name, account.username]

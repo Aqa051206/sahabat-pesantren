@@ -406,7 +406,6 @@ export const reports = {
       fail(409, 'Permintaan ini tidak bisa diubah lagi.')
     }
     request.status = identityStatus
-    report.tampilkanIdentitas = identityStatus === 'disetujui'
     request.answeredAt = offsetDate(0)
     markReportRead(user, report)
     return adaptReport(toRawReport(report, user))

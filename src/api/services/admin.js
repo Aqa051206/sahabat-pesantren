@@ -3,13 +3,21 @@ import { adaptAccount, adaptPagination } from '../adapters'
 
 const unwrap = (response) => response.data.data
 
+const safeDecode = (value) => {
+  try {
+    return decodeURIComponent(value)
+  } catch {
+    return value
+  }
+}
+
 const downloadPayload = (response, fallbackFilename) => {
   const disposition = response.headers?.['content-disposition'] ?? ''
   const encodedFilename = disposition.match(/filename\*=UTF-8''([^;]+)/i)?.[1]
   const plainFilename = disposition.match(/filename="?([^";]+)"?/i)?.[1]
   return {
     blob: response.data,
-    filename: decodeURIComponent(encodedFilename ?? plainFilename ?? fallbackFilename),
+    filename: safeDecode(encodedFilename ?? plainFilename ?? fallbackFilename),
   }
 }
 

@@ -52,6 +52,8 @@ export function Conversation({ id, viewer }) {
   const toast = useToast()
   const listRef = useRef(null)
   const markedReadRef = useRef(null)
+  const previousCountRef = useRef(0)
+  const stickToBottomRef = useRef(true)
 
   useEffect(() => {
     if (!data || markedReadRef.current === id) return
@@ -67,9 +69,29 @@ export function Conversation({ id, viewer }) {
   } = useForm({ resolver: zodResolver(schema), defaultValues: { body: '' } })
 
   useEffect(() => {
-    if (data && listRef.current) {
-      listRef.current.scrollTop = listRef.current.scrollHeight
+    previousCountRef.current = 0
+    stickToBottomRef.current = true
+  }, [id])
+
+  const handleScroll = () => {
+    const element = listRef.current
+    if (!element) return
+    stickToBottomRef.current =
+      element.scrollHeight - element.scrollTop - element.clientHeight < 80
+  }
+
+  useEffect(() => {
+    const element = listRef.current
+    if (!element || !data) return
+    const previousCount = previousCountRef.current
+    const nextCount = data.length
+    if (
+      (previousCount === 0 || stickToBottomRef.current) &&
+      nextCount > previousCount
+    ) {
+      element.scrollTop = element.scrollHeight
     }
+    previousCountRef.current = nextCount
   }, [data])
 
   const senderRoleFor = (message) => {
@@ -98,12 +120,15 @@ export function Conversation({ id, viewer }) {
     return false
   }
 
+  const isAnonymousName = (name) =>
+    !name || /^anonymous$/i.test(String(name).trim())
+
   const labelFor = (message, senderRole, own) => {
-    if (viewer === 'santri') {
-      return senderRole === 'santri' ? 'Kamu' : 'Petugas'
-    }
-    if (senderRole === 'santri') return 'Pelapor'
+    if (viewer === 'santri') return own ? 'Kamu' : 'Petugas'
     if (own) return message.senderName || user?.name || 'Petugas'
+    if (senderRole === 'santri' || isAnonymousName(message.senderName)) {
+      return 'Pelapor'
+    }
     if (senderRole === 'pengurus' || senderRole === 'pimpinan') {
       return senderRole === user?.role
         ? message.senderName || senderRole
@@ -111,7 +136,7 @@ export function Conversation({ id, viewer }) {
           ? 'Pengurus'
           : 'Pimpinan'
     }
-    return message.senderName || 'Petugas'
+    return message.senderName || 'Pelapor'
   }
 
   const onSubmit = async (values) => {
@@ -134,6 +159,7 @@ export function Conversation({ id, viewer }) {
 
       <div
         ref={listRef}
+        onScroll={handleScroll}
         className="mt-4 flex max-h-80 flex-col gap-3 overflow-y-auto pr-1"
       >
         {isLoading ? (

@@ -63,6 +63,7 @@ export const adaptReport = (raw) =>
   raw
     ? {
         id: raw.id,
+        ownerId: raw.users_id ?? null,
         noLaporan: raw.no_laporan,
         kategori: raw.kategori,
         isi: raw.isi,

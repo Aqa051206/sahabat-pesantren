@@ -1,5 +1,5 @@
 import { AlertTriangle, CheckCircle2, Info, X } from 'lucide-react'
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { cn } from '../../lib/cn'
 import { ToastContext } from './toast-context'
 
@@ -21,17 +21,30 @@ const TONES = {
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([])
   const counter = useRef(0)
+  const timers = useRef(new Map())
 
   const dismiss = useCallback((id) => {
+    const timer = timers.current.get(id)
+    if (timer) window.clearTimeout(timer)
+    timers.current.delete(id)
     setToasts((current) => current.filter((toast) => toast.id !== id))
   }, [])
+
+  useEffect(
+    () => () => {
+      timers.current.forEach((timer) => window.clearTimeout(timer))
+      timers.current.clear()
+    },
+    [],
+  )
 
   const showToast = useCallback(
     (message, tone = 'info') => {
       counter.current += 1
       const id = counter.current
       setToasts((current) => [...current, { id, message, tone }])
-      window.setTimeout(() => dismiss(id), 5000)
+      const timer = window.setTimeout(() => dismiss(id), 5000)
+      timers.current.set(id, timer)
     },
     [dismiss],
   )

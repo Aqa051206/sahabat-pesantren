@@ -14,9 +14,44 @@ function Modal({ open, onClose, title, children, footer, className }) {
   useEffect(() => {
     if (!open) return undefined
 
+    const previouslyFocused = document.activeElement
+
     const onKeyDown = (event) => {
-      if (event.key === 'Escape') onCloseRef.current()
+      if (event.key === 'Escape') {
+        onCloseRef.current()
+        return
+      }
+      if (event.key !== 'Tab') return
+
+      const focusable = Array.from(
+        panelRef.current?.querySelectorAll(
+          'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ) ?? [],
+      )
+      if (!focusable.length) {
+        event.preventDefault()
+        return
+      }
+
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      const active = document.activeElement
+
+      if (active === panelRef.current) {
+        event.preventDefault()
+        const target = event.shiftKey ? last : first
+        target.focus()
+        return
+      }
+      if (event.shiftKey && active === first) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && active === last) {
+        event.preventDefault()
+        first.focus()
+      }
     }
+
     document.addEventListener('keydown', onKeyDown)
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
@@ -25,6 +60,9 @@ function Modal({ open, onClose, title, children, footer, className }) {
     return () => {
       document.removeEventListener('keydown', onKeyDown)
       document.body.style.overflow = previousOverflow
+      if (previouslyFocused instanceof HTMLElement && previouslyFocused.isConnected) {
+        previouslyFocused.focus()
+      }
     }
   }, [open])
 

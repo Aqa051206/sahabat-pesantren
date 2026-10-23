@@ -82,20 +82,25 @@ export function AuthProvider({ children }) {
     [navigate, queryClient],
   )
 
-  useEffect(
-    () =>
-      onSessionChange((next) => {
-        setSessionState(next)
-        if (!next) {
-          queryClient.clear()
-          navigate('/login', {
-            replace: true,
-            state: { message: 'Sesi berakhir di tab lain. Silakan masuk kembali.' },
-          })
-        }
-      }),
-    [navigate, queryClient],
-  )
+  useEffect(() => {
+    let previous = getSession()
+    return onSessionChange((next) => {
+      const previousUser = previous?.user?.id ?? null
+      const nextUser = next?.user?.id ?? null
+      if (previousUser && nextUser && previousUser !== nextUser) {
+        queryClient.clear()
+      }
+      previous = next
+      setSessionState(next)
+      if (!next) {
+        queryClient.clear()
+        navigate('/login', {
+          replace: true,
+          state: { message: 'Sesi berakhir di tab lain. Silakan masuk kembali.' },
+        })
+      }
+    })
+  }, [navigate, queryClient])
 
   useEffect(() => {
     const handlePageShow = (event) => {

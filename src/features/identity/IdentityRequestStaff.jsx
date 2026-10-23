@@ -18,8 +18,12 @@ const PROOF_TYPES = IDENTITY_PROOF_ACCEPT.split(',')
 const IDENTITY_CARD_SURFACE =
   '!border !border-[#e1e9e2] !shadow-[0_2px_10px_rgba(18,55,42,0.06)]'
 
+const isSafeProofUrl = (value) =>
+  typeof value === 'string' &&
+  (value.startsWith('/') || /^https?:\/\//i.test(value))
+
 export function ProofLink({ request }) {
-  if (!request.buktiUrl) return null
+  if (!isSafeProofUrl(request.buktiUrl)) return null
   return (
     <a
       href={request.buktiUrl}

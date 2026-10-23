@@ -276,9 +276,9 @@ seksi "Akun Petugas" di `src/pages/pimpinan/AccountsPage.jsx`.
 8. Apakah isi laporan memiliki batas panjang di backend? Frontend dan mode mock
    tidak lagi membatasi panjang cerita.
 
-## Keamanan (TODO)
+## Keamanan
 
-- CSP aktif (`public/_headers`, `vercel.json`) memakai `connect-src 'self'`.
-  **TODO sebelum rilis**: tambahkan origin API, mis.
-  `connect-src 'self' https://api.domain.example`, begitu domain final diketahui.
+- CSP aktif (`public/_headers`, `vercel.json`) mengizinkan `'self'`, origin API
+  produksi `https://www.piancollections.my.id`, dan `https://piancollections.my.id`
+  pada `connect-src`. Jika origin API berubah, perbarui kedua berkas tersebut.
 - Semua komunikasi harus HTTPS; `upgrade-insecure-requests` sudah dipasang.

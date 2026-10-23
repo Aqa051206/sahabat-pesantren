@@ -1,5 +1,9 @@
 import { http } from '../client'
 import { adaptPagination, adaptReport } from '../adapters'
+import { ROLES } from '../../lib/constants'
+import { identityVisible } from '../../lib/displayReporter'
+import { getSession } from '../../lib/session'
+import { ApiError } from '../errors'
 
 const unwrap = (response) => response.data.data
 
@@ -38,8 +42,45 @@ const unwrapList = (response) => {
   }
 }
 
+const currentUser = () => getSession()?.user ?? null
+
+const canViewReport = (report, role, userId) => {
+  if (role === ROLES.PENGURUS && report.kategori === 'masalah_pengurus') {
+    return false
+  }
+  if (
+    role === ROLES.SANTRI &&
+    report.ownerId != null &&
+    userId != null &&
+    String(report.ownerId) !== String(userId)
+  ) {
+    return false
+  }
+  return true
+}
+
+const sanitizeReport = (report, role = currentUser()?.role ?? null) => {
+  if (!report) return report
+  const visible = identityVisible(report, role)
+  let next = visible ? report : { ...report, pelaporNama: null }
+  if (role === ROLES.SANTRI) next = { ...next, catatan: [] }
+  if (role === ROLES.PENGURUS) {
+    next = { ...next, permintaanIdentitas: null }
+  }
+  return next
+}
+
+const assertCanView = (report, role, userId) => {
+  if (!canViewReport(report, role, userId)) {
+    throw new ApiError({
+      status: 403,
+      message: 'Laporan ini tidak dapat diakses oleh peranmu.',
+    })
+  }
+}
+
 export const createReport = async (payload) =>
-  adaptReport(unwrapReport(await http.post('/reports', payload)))
+  sanitizeReport(adaptReport(unwrapReport(await http.post('/reports', payload))))
 
 export const getMine = async () => {
   const firstPage = unwrapList(
@@ -52,11 +93,16 @@ export const getMine = async () => {
     )
     allReports.push(...result.items)
   }
+  const user = currentUser()
+  const role = user?.role ?? null
+  const visible = allReports.filter((report) =>
+    canViewReport(report, role, user?.id),
+  )
   return {
-    items: allReports,
+    items: visible.map((report) => sanitizeReport(report, role)),
     meta: adaptPagination(
-      { current_page: 1, last_page: 1, total: allReports.length },
-      allReports.length,
+      { current_page: 1, last_page: 1, total: visible.length },
+      visible.length,
     ),
   }
 }
@@ -73,15 +119,19 @@ export const getList = async ({ status, kategori, kodeLaporan } = {}) => {
     allReports.push(...result.items)
   }
 
+  const user = currentUser()
+  const role = user?.role ?? null
   const code = String(kodeLaporan ?? '').trim().toLowerCase()
-  const filtered = allReports.filter(
-    (report) =>
-      (!status || report.status === status) &&
-      (!kategori || report.kategori === kategori) &&
-      (!code || String(report.noLaporan ?? '').toLowerCase().includes(code)),
-  )
+  const filtered = allReports
+    .filter((report) => canViewReport(report, role, user?.id))
+    .filter(
+      (report) =>
+        (!status || report.status === status) &&
+        (!kategori || report.kategori === kategori) &&
+        (!code || String(report.noLaporan ?? '').toLowerCase().includes(code)),
+    )
   return {
-    items: filtered,
+    items: filtered.map((report) => sanitizeReport(report, role)),
     meta: adaptPagination(
       { current_page: 1, last_page: 1, total: filtered.length },
       filtered.length,
@@ -89,28 +139,40 @@ export const getList = async ({ status, kategori, kodeLaporan } = {}) => {
   }
 }
 
-export const getDetail = async (id) =>
-  adaptReport(unwrap(await http.get(`/reports/${id}`)))
+export const getDetail = async (id) => {
+  const report = adaptReport(unwrap(await http.get(`/reports/${id}`)))
+  const user = currentUser()
+  assertCanView(report, user?.role ?? null, user?.id)
+  return sanitizeReport(report, user?.role ?? null)
+}
 
 export const updateIdentity = async (id, tampilkanIdentitas) =>
-  adaptReport(
-    unwrapReport(
-      await http.patch(`/reports/${id}/identity`, {
-        tampilkan_identitas: tampilkanIdentitas,
-      }),
+  sanitizeReport(
+    adaptReport(
+      unwrapReport(
+        await http.patch(`/reports/${id}/identity`, {
+          tampilkan_identitas: tampilkanIdentitas,
+        }),
+      ),
     ),
   )
 
 export const updateStatus = async (id, status) =>
-  adaptReport(unwrapReport(await http.patch(`/reports/${id}/status`, { status })))
+  sanitizeReport(
+    adaptReport(
+      unwrapReport(await http.patch(`/reports/${id}/status`, { status })),
+    ),
+  )
 
 export const escalate = async (id, { tujuan, catatan }) =>
-  adaptReport(
-    unwrapReport(
-      await http.post(`/reports/${id}/escalate`, {
-        tujuan,
-        catatan: catatan ?? null,
-      }),
+  sanitizeReport(
+    adaptReport(
+      unwrapReport(
+        await http.post(`/reports/${id}/escalate`, {
+          tujuan,
+          catatan: catatan ?? null,
+        }),
+      ),
     ),
   )
 
@@ -120,8 +182,12 @@ export const requestIdentity = async (id, { alasan, bukti }) => {
   const form = new FormData()
   form.append('alasan', alasan)
   if (bukti) form.append('bukti', bukti)
-  return adaptReport(
-    unwrapNestedReport(await http.post(`/reports/${id}/identity-request`, form)),
+  return sanitizeReport(
+    adaptReport(
+      unwrapNestedReport(
+        await http.post(`/reports/${id}/identity-request`, form),
+      ),
+    ),
   )
 }
 
@@ -131,11 +197,13 @@ export const answerIdentityRequest = async (id, status) => {
   if (!Object.hasOwn(answers, status)) {
     throw new Error('Jawaban permintaan identitas tidak valid.')
   }
-  return adaptReport(
-    unwrap(
-      await http.patch(`/reports/${id}/identity-request`, {
-        status: answers[status],
-      }),
+  return sanitizeReport(
+    adaptReport(
+      unwrap(
+        await http.patch(`/reports/${id}/identity-request`, {
+          status: answers[status],
+        }),
+      ),
     ),
   )
 }

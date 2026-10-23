@@ -44,21 +44,10 @@ function SummaryCard({ icon: Icon, label, value, highlight = false }) {
 }
 
 export default function StaffDashboardPage() {
-  const allReports = useStaffReports({ page: 1 })
-  const newReports = useStaffReports({ page: 1, status: 'baru' })
-  const inProgressReports = useStaffReports({
-    page: 1,
-    status: 'diproses',
-  })
-  const completedReports = useStaffReports({ page: 1, status: 'selesai' })
-  const statusReports = [
-    newReports,
-    inProgressReports,
-    completedReports,
-  ]
-  const queries = [allReports, ...statusReports]
-  const isLoading = queries.some((query) => query.isLoading)
-  const isError = queries.some((query) => query.isError)
+  const reportsQuery = useStaffReports({})
+  const reports = reportsQuery.data?.items ?? []
+  const isLoading = reportsQuery.isLoading
+  const isError = reportsQuery.isError
 
   if (isLoading) {
     return (
@@ -74,19 +63,21 @@ export default function StaffDashboardPage() {
     )
   }
 
-  if (isError || !allReports.data) {
+  if (isError || !reportsQuery.data) {
     return (
       <ErrorState
         title="Ringkasan gagal dimuat"
         message="Coba muat ulang dashboard."
-        onRetry={() => Promise.all(queries.map((query) => query.refetch()))}
+        onRetry={() => reportsQuery.refetch()}
       />
     )
   }
 
   const statValues = [
-    allReports.data.meta.total,
-    ...statusReports.map((query) => query.data?.meta.total ?? 0),
+    reports.length,
+    reports.filter((report) => report.status === 'baru').length,
+    reports.filter((report) => report.status === 'diproses').length,
+    reports.filter((report) => report.status === 'selesai').length,
   ]
 
   return (
@@ -138,9 +129,9 @@ export default function StaffDashboardPage() {
             </p>
           </div>
         </div>
-        {allReports.data.items.length ? (
+        {reports.length ? (
           <ul className="grid gap-3">
-            {allReports.data.items.slice(0, 6).map((report) => (
+            {reports.slice(0, 6).map((report) => (
               <li key={report.id}>
                 <Link
                   to={`/petugas/laporan/${report.id}`}

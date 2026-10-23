@@ -1,7 +1,16 @@
-// Backend updates tampilkan_identitas when the santri approves or revokes consent.
-export const identityVisible = (report) => Boolean(report.tampilkanIdentitas)
+import { ROLES } from './constants'
 
-export const displayReporter = (report) =>
-  identityVisible(report) && report.pelaporNama
-    ? report.pelaporNama
+const isAnonymous = (name) =>
+  !name || /^anonymous$/i.test(String(name).trim())
+
+export const identityVisible = (report, role) =>
+  Boolean(report?.tampilkanIdentitas) ||
+  (role === ROLES.PIMPINAN &&
+    report?.permintaanIdentitas?.status === 'disetujui')
+
+export const displayReporter = (report, role) => {
+  const name = report?.pelaporNama
+  return identityVisible(report, role) && !isAnonymous(name)
+    ? name
     : 'Pelapor (identitas disembunyikan)'
+}

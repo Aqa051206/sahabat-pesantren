@@ -56,8 +56,8 @@ masuk pertama kali.
 - Set `VITE_USE_MOCK=false` agar data contoh tidak dipakai.
 - Isi `VITE_API_URL` dengan origin API saja, misalnya
   `https://api.example.com`.
-- Perbarui `connect-src` CSP di `public/_headers` dan `vercel.json` agar
-  mengizinkan origin API.
+- Pastikan `connect-src` CSP di `public/_headers` dan `vercel.json` memuat
+  origin API yang dipakai.
 - Uji login dan kirim setidaknya satu laporan melalui API online.
 - Pastikan banner mode demo tidak tampil pada build produksi.
 
@@ -65,8 +65,8 @@ masuk pertama kali.
 
 1. Set `VITE_USE_MOCK=false`.
 2. Set `VITE_API_URL` ke origin API saja (misal `https://api.example.com`).
-3. Sesuaikan CSP di `public/_headers` dan `vercel.json` — tambahkan origin API
-   pada `connect-src` (lihat `API_ASSUMPTIONS.md`).
+3. Pastikan CSP di `public/_headers` dan `vercel.json` memuat origin API pada
+   `connect-src` (lihat `API_ASSUMPTIONS.md`).
 4. Bangun ulang: `npm run build`.
 
 Kontrak endpoint yang dipakai aplikasi terdokumentasi di `API_ASSUMPTIONS.md`.
@@ -96,13 +96,13 @@ src/
   berlaku pada host yang mendukung format Netlify; pastikan host lain diberi
   aturan header yang setara. Pada Netlify, aturan `/assets/*` yang lebih
   spesifik dimaksudkan untuk menggantikan kebijakan cache umum.
-- CSP membatasi koneksi ke `'self'` secara default. Tambahkan origin API ke
-  `connect-src` pada `public/_headers` dan `vercel.json` sebelum memakai API
-  lintas origin.
+- CSP membatasi koneksi ke `'self'` dan origin API yang tercantum pada
+  `connect-src` di `public/_headers` dan `vercel.json`.
 - Tidak ada `dangerouslySetInnerHTML`, atau aset eksternal. Hanya `localStorage`
   yang dipakai, itupun khusus token sesi; isi laporan/draf tidak pernah
   disimpan di browser.
 - Identitas pelapor hanya terlihat petugas bila santri mengizinkan
-  (`tampilkan_identitas`); UI petugas tidak pernah menampilkan NIS/nomor santri.
+  (`tampilkan_identitas`), atau oleh pimpinan bila permintaan identitas
+  disetujui; UI petugas tidak pernah menampilkan NIS/nomor santri.
 - Semua tanggal di UI petugas hanya menampilkan tanggal (tanpa jam).
 - Keluar cepat tersedia di setiap halaman santri tanpa konfirmasi.
