@@ -25,7 +25,7 @@ function SummaryCard({ icon: Icon, label, value, highlight = false }) {
   return (
     <div
       className={cn(
-        'min-h-28 rounded-[20px] p-3 shadow-[0_8px_24px_rgba(18,55,42,0.06)]',
+        'min-h-28 rounded-[20px] border border-[#e1e9e2] p-3 shadow-[0_2px_10px_rgba(18,55,42,0.06)]',
         highlight ? 'bg-report-yellow' : 'bg-white',
       )}
     >
@@ -103,7 +103,7 @@ export default function StaffDashboardPage() {
         </div>
         <Link
           to="/petugas"
-          className="inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-5 text-sm font-semibold text-white shadow-[0_3px_0_#09281f,0_8px_18px_rgba(18,55,42,0.08)] transition hover:-translate-y-0.5 hover:bg-primary-hover"
+          className="inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-5 text-sm font-semibold text-white shadow-[0_2px_10px_rgba(18,55,42,0.12)] transition hover:-translate-y-0.5 hover:bg-primary-hover"
         >
           Lihat daftar laporan
         </Link>
@@ -144,7 +144,7 @@ export default function StaffDashboardPage() {
               <li key={report.id}>
                 <Link
                   to={`/petugas/laporan/${report.id}`}
-                  className="block rounded-3xl bg-white p-4 shadow-[0_8px_24px_rgba(18,55,42,0.06)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_12px_28px_rgba(18,55,42,0.1)] sm:p-5"
+                  className="block rounded-3xl border border-[#e1e9e2] bg-white p-4 shadow-[0_2px_10px_rgba(18,55,42,0.06)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#cbd9ce] hover:shadow-[0_4px_14px_rgba(18,55,42,0.08)] sm:p-5"
                 >
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
@@ -165,7 +165,7 @@ export default function StaffDashboardPage() {
             ))}
           </ul>
         ) : (
-          <Card className="p-6">
+          <Card className="!border !border-[#e1e9e2] !shadow-[0_2px_10px_rgba(18,55,42,0.06)] p-6">
             <EmptyState
               title="Belum ada laporan"
               description="Laporan yang diteruskan kepada peranmu akan tampil di sini."

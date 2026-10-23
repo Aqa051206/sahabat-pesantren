@@ -25,6 +25,9 @@ import { useCreateReport } from '../../features/reports/hooks'
 import { cn } from '../../lib/cn'
 import { CATEGORIES, routesToPimpinan } from '../../lib/constants'
 
+const REPORT_CARD_SURFACE =
+  '!border !border-[#e1e9e2] !shadow-[0_2px_10px_rgba(18,55,42,0.06)]'
+
 const schema = z.object({
   kategori: z.string().min(1, 'Pilih salah satu kategori.'),
   isi: z
@@ -92,7 +95,7 @@ function SuccessScreen({ report }) {
         dalam waktu 24 jam.
       </p>
 
-      <Card className="mt-6 p-6">
+      <Card className={`${REPORT_CARD_SURFACE} mt-6 p-6`}>
         <p className="text-sm font-semibold uppercase tracking-wide text-body">
           Nomor laporan
         </p>
@@ -186,7 +189,7 @@ export default function CreateReportPage() {
         </div>
       </header>
 
-      <Card className="mb-3 border-2 border-[#c98269] bg-[#fff1e9] p-4 shadow-[0_3px_0_#12372a,0_8px_18px_rgba(18,55,42,0.04)] sm:p-4">
+      <Card className={`${REPORT_CARD_SURFACE} mb-3 bg-[#fff1e9] p-4 sm:p-4`}>
         <div className="flex items-start gap-3">
           <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#ff765c] text-white">
             <LifeBuoy aria-hidden="true" className="size-5" />
@@ -211,7 +214,7 @@ export default function CreateReportPage() {
         autoComplete="off"
         noValidate
       >
-        <Card className="p-4 shadow-[0_3px_0_#12372a,0_8px_18px_rgba(18,55,42,0.04)] sm:p-4">
+        <Card className={`${REPORT_CARD_SURFACE} p-4 sm:p-4`}>
           <fieldset>
             <StepHeading number="1">Ini tentang apa?</StepHeading>
             <div className="mt-2 grid gap-2 sm:grid-cols-2">
@@ -266,7 +269,7 @@ export default function CreateReportPage() {
           </div>
         ) : null}
 
-        <Card className="p-4 shadow-[0_3px_0_#12372a,0_8px_18px_rgba(18,55,42,0.04)] sm:p-4">
+        <Card className={`${REPORT_CARD_SURFACE} p-4 sm:p-4`}>
           <fieldset>
             <StepHeading number="2">Ceritamu</StepHeading>
             <label htmlFor="isi" className="sr-only">Ceritamu</label>
@@ -290,7 +293,7 @@ export default function CreateReportPage() {
           </fieldset>
         </Card>
 
-        <Card className="p-4 shadow-[0_3px_0_#12372a,0_8px_18px_rgba(18,55,42,0.04)] sm:p-4">
+        <Card className={`${REPORT_CARD_SURFACE} p-4 sm:p-4`}>
           <fieldset>
             <StepHeading number="3">Soal namamu</StepHeading>
             <Switch
