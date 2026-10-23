@@ -41,7 +41,11 @@ disebutkan tetap merupakan asumsi sampai dikonfirmasi tim backend.
   `PATCH /api/v1/reports/{id}/identity-request` (permintaan dan jawaban izin
   melihat identitas; belum termasuk kontrak beku). Jawaban menerima
   `status: 1` (setuju) atau `status: 0` (tolak); mencabut persetujuan memakai
-  `PATCH /reports/{id}/identity` dengan `tampilkan_identitas: false`.
+  `PATCH /reports/{id}/identity` dengan `tampilkan_identitas: false`. Bila
+  permintaan terbaru sedang `disetujui`, backend mengubahnya menjadi `dicabut`
+  dan mengisi `dijawab`; menyalakan kembali switch mengubah `dicabut` menjadi
+  `disetujui`. Permintaan baru ditolak `409` selama masih ada permintaan
+  `menunggu` atau `disetujui`.
 
 ⚠️ Bentuk model laporan yang dikonfirmasi: `{ id, users_id, no_laporan,
   kategori, isi, tampilkan_identitas, status, waktu }`. Frontend memakai `id`
@@ -85,8 +89,9 @@ hanya menggunakannya bila API memang mengirimkannya:
   `pelapor_nama`.
 - `permintaan_identitas` (opsional) — asumsi respons `{ status, alasan,
   diminta_oleh, bukti_nama, bukti_url, dibuat, dijawab }`. Status jawaban
-  `disetujui` atau `ditolak`; frontend menormalkan `true`/`1` menjadi
-  `disetujui` dan `false`/`0` menjadi `ditolak`.
+  `menunggu`, `disetujui`, `ditolak`, atau `dicabut`; frontend menormalkan
+  `true`/`1` menjadi `disetujui`, `false`/`0` menjadi `ditolak`, dan `2`
+  menjadi `dicabut`.
 - `catatan_internal` atau `catatans` — array `{ id, catatan, users_id,
   laporan_id, created_at, updated_at, user? }`, hanya dikembalikan untuk staff.
   Frontend memetakan `catatan` menjadi isi catatan dan mengambil nama penulis

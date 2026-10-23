@@ -301,7 +301,18 @@ export const reports = {
     if (user.role !== 'santri') {
       fail(403, 'Hanya pelapor yang dapat mengubah ini.')
     }
-    report.tampilkanIdentitas = Boolean(tampilkanIdentitas)
+    const next = Boolean(tampilkanIdentitas)
+    report.tampilkanIdentitas = next
+    const request = report.permintaanIdentitas
+    if (request) {
+      if (!next && request.status === 'disetujui') {
+        request.status = 'dicabut'
+        request.answeredAt = offsetDate(0)
+      } else if (next && request.status === 'dicabut') {
+        request.status = 'disetujui'
+        request.answeredAt = offsetDate(0)
+      }
+    }
     return adaptReport(toRawReport(report, user))
   },
 

@@ -121,6 +121,13 @@ export default function IdentityRequestSantri({ report }) {
           tersembunyi.
         </p>
       ) : null}
+
+      {status === 'dicabut' ? (
+        <p className="mt-4 text-sm text-body">
+          Kamu mencabut persetujuan pada {formatDateOnly(request.answeredAt)}.
+          Namamu disembunyikan lagi.
+        </p>
+      ) : null}
     </Card>
   )
 }

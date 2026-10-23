@@ -3,6 +3,16 @@ import { adaptPagination, adaptReport } from '../adapters'
 
 const unwrap = (response) => response.data.data
 
+// Beberapa endpoint laporan membungkus model di `data`, sebagian lagi di
+// `laporan`; keduanya harus dipetakan dengan adapter yang sama.
+const unwrapReport = (response) =>
+  response.data.data ?? response.data.laporan
+
+// Endpoint pengajuan memakai `data` untuk model permintaan, jadi laporan
+// terbaru harus diambil dari `laporan` lebih dulu.
+const unwrapNestedReport = (response) =>
+  response.data.laporan ?? response.data.data
+
 const unwrapList = (response) => {
   const body = response.data ?? {}
   const payload = body.data
@@ -29,7 +39,7 @@ const unwrapList = (response) => {
 }
 
 export const createReport = async (payload) =>
-  adaptReport(unwrap(await http.post('/reports', payload)))
+  adaptReport(unwrapReport(await http.post('/reports', payload)))
 
 export const getMine = async () => {
   const firstPage = unwrapList(
@@ -84,7 +94,7 @@ export const getDetail = async (id) =>
 
 export const updateIdentity = async (id, tampilkanIdentitas) =>
   adaptReport(
-    unwrap(
+    unwrapReport(
       await http.patch(`/reports/${id}/identity`, {
         tampilkan_identitas: tampilkanIdentitas,
       }),
@@ -92,11 +102,11 @@ export const updateIdentity = async (id, tampilkanIdentitas) =>
   )
 
 export const updateStatus = async (id, status) =>
-  adaptReport(unwrap(await http.patch(`/reports/${id}/status`, { status })))
+  adaptReport(unwrapReport(await http.patch(`/reports/${id}/status`, { status })))
 
 export const escalate = async (id, { tujuan, catatan }) =>
   adaptReport(
-    unwrap(
+    unwrapReport(
       await http.post(`/reports/${id}/escalate`, {
         tujuan,
         catatan: catatan ?? null,
@@ -111,7 +121,7 @@ export const requestIdentity = async (id, { alasan, bukti }) => {
   form.append('alasan', alasan)
   if (bukti) form.append('bukti', bukti)
   return adaptReport(
-    unwrap(await http.post(`/reports/${id}/identity-request`, form)),
+    unwrapNestedReport(await http.post(`/reports/${id}/identity-request`, form)),
   )
 }
 

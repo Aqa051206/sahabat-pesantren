@@ -54,7 +54,9 @@ export const useUpdateIdentity = (id) => {
     mutationFn: (tampilkanIdentitas) =>
       api.reports.updateIdentity(id, tampilkanIdentitas),
     onSuccess: (report) => {
-      queryClient.setQueryData(reportKeys.detail(id), report)
+      if (report) {
+        queryClient.setQueryData(reportKeys.detail(id), report)
+      }
       queryClient.invalidateQueries({ queryKey: reportKeys.detail(id) })
       queryClient.invalidateQueries({ queryKey: ['reports', 'mine'] })
     },

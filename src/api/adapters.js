@@ -48,7 +48,9 @@ export const adaptIdentityRequest = (raw) =>
                 raw.status === 0 ||
                 raw.status === '0'
               ? 'ditolak'
-            : raw.status,
+            : raw.status === 2 || raw.status === '2'
+              ? 'dicabut'
+              : raw.status,
         alasan: raw.alasan,
         diminta: raw.diminta_oleh ?? null,
         buktiNama: raw.bukti_nama ?? null,
