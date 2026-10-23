@@ -77,8 +77,9 @@ export default function IdentityRequestSantri({ report }) {
         <>
           <p className="mt-4 text-sm text-body">
             Kamu bebas memilih. Kalau kamu menolak, namamu tetap tersembunyi
-            dan laporanmu tetap diproses. Jika menyetujui, namamu akan
-            ditampilkan sesuai pengaturan identitas laporan.
+            dan laporanmu tetap diproses. Jika menyetujui, pengaturan
+            &quot;Tampilkan namaku ke petugas&quot; akan aktif sehingga pengurus
+            dan pimpinan dapat melihat namamu.
           </p>
           <div className="mt-4 flex flex-wrap gap-3">
             <Button
@@ -101,8 +102,8 @@ export default function IdentityRequestSantri({ report }) {
       {status === 'disetujui' ? (
         <>
           <p className="mt-4 text-sm text-body">
-            Kamu menyetujui pada {formatDateOnly(request.answeredAt)}. Pimpinan
-            dapat melihat namamu di laporan ini.
+            Kamu menyetujui pada {formatDateOnly(request.answeredAt)}. Pengurus
+            dan pimpinan dapat melihat namamu di laporan ini.
           </p>
           <div className="mt-4">
             <Button

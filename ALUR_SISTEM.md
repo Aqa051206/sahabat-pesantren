@@ -212,7 +212,7 @@ flowchart TD
 ```
 
 - Pengurus tidak melihat kartu permintaan identitas; data itu hanya untuk pimpinan dan pelapor. Backend juga tidak boleh mengirim field `permintaan_identitas` kepada pengurus.
-- Nama pelapor tampil jika santri menyalakan `tampilkan_identitas`, atau untuk pimpinan jika `permintaan_identitas` berstatus `disetujui`. Selain itu UI menampilkan `Pelapor (identitas disembunyikan)`.
+- Nama pelapor tampil bila `tampilkan_identitas` aktif. Saat ini backend juga mengaktifkannya ketika santri menyetujui permintaan pimpinan, sehingga pengurus dan pimpinan sama-sama melihat nama. Jika kebijakan hanya pimpinan, backend harus mengirim nama hanya untuk pimpinan tanpa menyalakan flag. Selain itu UI menampilkan `Pelapor (identitas disembunyikan)`.
 - Daftar menandai laporan yang melewati `batas_klarifikasi` sebagai **Lewat batas**. Ini indikator visual, bukan pembatasan otomatis.
 - Catatan internal hanya dapat dibaca dan ditulis oleh petugas (pengurus/pimpinan).
 
@@ -295,21 +295,17 @@ Aturan visibilitas nama:
 
 ```mermaid
 flowchart TD
-  A["Petugas membuka laporan"] --> B{"Peran"}
-  B -- "Pengurus" --> C{"tampilkan_identitas = true?"}
-  B -- "Pimpinan" --> D{"tampilkan_identitas = true<br/>atau permintaan disetujui?"}
-  C -- "Ya" --> E["Nama pelapor terlihat"]
-  C -- "Tidak" --> F["Pelapor (identitas disembunyikan)"]
-  D -- "Ya" --> E
-  D -- "Tidak" --> F
+  A["Petugas membuka laporan"] --> B{"tampilkan_identitas = true?"}
+  B -- "Ya" --> E["Nama pelapor terlihat"]
+  B -- "Tidak" --> F["Pelapor (identitas disembunyikan)"]
 ```
 
 - Permintaan baru hanya bisa diajukan pimpinan.
 - Pimpinan mengisi alasan (20–1000 karakter) dan boleh melampirkan bukti JPG/PNG/PDF maksimal 5 MB.
 - Permintaan ditolak `409` jika masih ada permintaan `menunggu` atau sudah `disetujui`.
 - Santri dapat menolak tanpa memengaruhi proses laporan.
-- Persetujuan hanya membuka nama untuk **pimpinan**, bukan pengurus.
-- Jika santri mencabut persetujuan, nama kembali disembunyikan.
+- Persetujuan saat ini mengaktifkan `tampilkan_identitas`, sehingga pengurus dan pimpinan dapat melihat nama. Jika kebijakan hanya pimpinan, backend harus mengirim nama hanya ke pimpinan tanpa menyalakan flag.
+- Jika santri mencabut persetujuan, status permintaan menjadi `dicabut` dan nama kembali disembunyikan.
 
 ## 9. Alur notifikasi
 
@@ -407,7 +403,7 @@ Catatan: `API_ASSUMPTIONS.md` menuliskan sebagian endpoint dengan prefix `/api/v
 
 ## 12. Aturan privasi dan keamanan yang berlaku
 
-- Nama pelapor disamarkan secara default; hanya terbuka bila santri menyalakan `tampilkan_identitas` atau (khusus pimpinan) menyetujui permintaan identitas.
+- Nama pelapor disamarkan secara default; hanya terbuka bila santri menyalakan `tampilkan_identitas`. Saat ini persetujuan permintaan pimpinan juga menyalakan flag tersebut, jadi pengurus dan pimpinan sama-sama melihat nama.
 - Pengurus tidak menerima data permintaan identitas dan tidak pernah melihat NIS/nomor santri di UI.
 - Tanggal pada UI petugas ditampilkan tanpa jam.
 - Isi laporan dan draf tidak disimpan di browser; hanya token sesi yang disimpan di `localStorage`.

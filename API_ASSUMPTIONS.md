@@ -112,7 +112,9 @@ disebutkan tetap merupakan asumsi sampai dikonfirmasi tim backend.
 - ⚠️ `POST /api/v1/reports/{id}/identity-request` dan
   `PATCH /api/v1/reports/{id}/identity-request` (permintaan dan jawaban izin
   melihat identitas; belum termasuk kontrak beku). Jawaban menerima
-  `status: 1` (setuju) atau `status: 0` (tolak); mencabut persetujuan memakai
+  `status: 1` (setuju) atau `status: 0` (tolak). Terverifikasi: saat
+  `status: 1`, backend juga mengaktifkan `tampilkan_identitas = true` sehingga
+  pengurus dan pimpinan melihat nama pelapor. Mencabut persetujuan memakai
   `PATCH /reports/{id}/identity` dengan `tampilkan_identitas: false`. Bila
   permintaan terbaru sedang `disetujui`, backend mengubahnya menjadi `dicabut`
   dan mengisi `dijawab`; menyalakan kembali switch mengubah `dicabut` menjadi
@@ -153,12 +155,13 @@ hanya menggunakannya bila API memang mengirimkannya:
 - `batas_klarifikasi`, `dieskalasi_tujuan`, `dieskalasi_catatan`,
   `dieskalasi_at`, `perlu_klarifikasi`
 - `pelapor_nama` — nama ditampilkan kepada pengurus dan pimpinan bila
-  `tampilkan_identitas = true`. Jika nilainya `false`, nama hanya boleh
-  dikirim kepada pimpinan bila `permintaan_identitas.status` bernilai
-  `disetujui`; persetujuan permintaan tidak membuka nama kepada pengurus.
-  Perubahan status laporan tidak membuka identitas, dan tidak ada override
-  paksa pimpinan. UI tetap menyamarkan nama bila API tidak mengirim
-  `pelapor_nama`.
+  `tampilkan_identitas = true`. Saat ini backend juga mengaktifkan flag itu
+  ketika santri menyetujui permintaan pimpinan, sehingga nama terlihat oleh
+  pengurus juga. Jika kebijakan hanya pimpinan yang boleh melihat, backend
+  harus mengirim nama hanya untuk pimpinan tanpa menyalakan flag. UI tetap
+  menyamarkan nama bila API tidak mengirim `pelapor_nama` atau mengirim
+  `Anonymous`. Perubahan status laporan tidak membuka identitas, dan tidak ada
+  override paksa pimpinan.
 - `permintaan_identitas` (opsional) — asumsi respons `{ status, alasan,
   diminta_oleh, bukti_nama, bukti_url, dibuat, dijawab }`. Status jawaban
   `menunggu`, `disetujui`, `ditolak`, atau `dicabut`; frontend menormalkan

@@ -52,6 +52,9 @@ export default function IdentityRequestStaff({ report }) {
     status === 'disetujui' || status === true || status === 1 || status === '1'
   const canRequest =
     !report.tampilkanIdentitas && !identityApproved && status !== 'menunggu'
+  const reporterNameVisible =
+    Boolean(report.pelaporNama) &&
+    !/^anonymous$/i.test(String(report.pelaporNama).trim())
 
   const close = () => {
     setOpen(false)
@@ -127,7 +130,9 @@ export default function IdentityRequestStaff({ report }) {
           </div>
           {status === 'disetujui' ? (
             <p className="mt-3 text-sm font-semibold text-status-done">
-              Santri menyetujui. Nama pelapor sekarang terlihat di atas.
+              {reporterNameVisible
+                ? 'Santri menyetujui. Nama pelapor sekarang terlihat di atas.'
+                : 'Santri menyetujui, tetapi nama pelapor belum tersedia dari server. Coba muat ulang.'}
             </p>
           ) : null}
           {status === 'ditolak' || status === 'dicabut' ? (

@@ -101,8 +101,9 @@ src/
 - Tidak ada `dangerouslySetInnerHTML`, atau aset eksternal. Hanya `localStorage`
   yang dipakai, itupun khusus token sesi; isi laporan/draf tidak pernah
   disimpan di browser.
-- Identitas pelapor hanya terlihat petugas bila santri mengizinkan
-  (`tampilkan_identitas`), atau oleh pimpinan bila permintaan identitas
-  disetujui; UI petugas tidak pernah menampilkan NIS/nomor santri.
+- Identitas pelapor hanya terlihat petugas bila `tampilkan_identitas` aktif.
+  Saat ini persetujuan permintaan pimpinan juga mengaktifkan flag itu, sehingga
+  pengurus dan pimpinan sama-sama melihat nama; UI petugas tidak pernah
+  menampilkan NIS/nomor santri.
 - Semua tanggal di UI petugas hanya menampilkan tanggal (tanpa jam).
 - Keluar cepat tersedia di setiap halaman santri tanpa konfirmasi.
