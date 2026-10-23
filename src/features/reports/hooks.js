@@ -4,6 +4,7 @@ import {
   useQueryClient,
 } from '@tanstack/react-query'
 import * as api from '../../api'
+import { notificationKeys } from '../notifications/queryKeys'
 import { reportKeys } from './queryKeys'
 
 // Jangan mengulang permintaan untuk error yang tidak akan berubah.
@@ -23,6 +24,7 @@ export const useReport = (id) =>
     queryKey: reportKeys.detail(id),
     queryFn: () => api.reports.getDetail(id),
     enabled: Boolean(id),
+    refetchOnMount: 'always',
     retry: retryUnlessClientError,
   })
 
@@ -59,6 +61,7 @@ export const useUpdateIdentity = (id) => {
       }
       queryClient.invalidateQueries({ queryKey: reportKeys.detail(id) })
       queryClient.invalidateQueries({ queryKey: ['reports', 'mine'] })
+      queryClient.invalidateQueries({ queryKey: notificationKeys.summary() })
     },
   })
 }
@@ -70,6 +73,7 @@ export const useUpdateStatus = (id) => {
     onSuccess: (report) => {
       queryClient.setQueryData(reportKeys.detail(id), report)
       queryClient.invalidateQueries({ queryKey: ['reports'] })
+      queryClient.invalidateQueries({ queryKey: notificationKeys.summary() })
     },
   })
 }
@@ -80,6 +84,7 @@ export const useEscalate = (id) => {
     mutationFn: (payload) => api.reports.escalate(id, payload),
     onSuccess: (report) => {
       queryClient.setQueryData(reportKeys.detail(id), report)
+      queryClient.invalidateQueries({ queryKey: notificationKeys.summary() })
     },
   })
 }
@@ -102,6 +107,7 @@ export const useAnswerIdentityRequest = (id) => {
     onSuccess: (report) => {
       queryClient.setQueryData(reportKeys.detail(id), report)
       queryClient.invalidateQueries({ queryKey: ['reports'] })
+      queryClient.invalidateQueries({ queryKey: notificationKeys.summary() })
     },
   })
 }

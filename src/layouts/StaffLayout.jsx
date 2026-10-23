@@ -1,4 +1,4 @@
-import { FileText, LayoutDashboard, Users } from 'lucide-react'
+import { Bell, FileText, LayoutDashboard, Users } from 'lucide-react'
 import { useCallback } from 'react'
 import { Outlet, useNavigate } from 'react-router-dom'
 import DemoBanner from '../components/DemoBanner'
@@ -7,6 +7,7 @@ import AuthenticatedNavigation from './AuthenticatedNavigation'
 import { IdleWarning } from '../features/auth/IdleWarning'
 import { useAuth } from '../features/auth/auth-context'
 import { useIdleTimer } from '../features/auth/useIdleTimer'
+import { useNotificationSummary } from '../features/notifications/hooks'
 import { ROLE_LABELS } from '../lib/constants'
 import { STAFF_IDLE_TIMEOUT_SECONDS } from '../lib/env'
 
@@ -31,12 +32,27 @@ const NAV_ITEMS = [
     icon: LayoutDashboard,
     roles: ['pengurus'],
   },
+  {
+    to: '/pimpinan/notifikasi',
+    label: 'Notifikasi',
+    icon: Bell,
+    roles: ['pimpinan'],
+  },
+  {
+    to: '/petugas/notifikasi',
+    label: 'Notifikasi',
+    icon: Bell,
+    roles: ['pengurus'],
+  },
   { to: '/pimpinan/akun', label: 'Akun', icon: Users, roles: ['pimpinan'] },
 ]
 
 export function StaffLayout() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
+  const { data: notificationSummary } = useNotificationSummary()
+
+  const notificationCount = Number(notificationSummary?.total ?? 0)
 
   const handleIdle = useCallback(() => {
     logout()
@@ -51,7 +67,13 @@ export function StaffLayout() {
     onIdle: handleIdle,
   })
 
-  const items = NAV_ITEMS.filter((item) => item.roles.includes(user?.role))
+  const items = NAV_ITEMS.filter((item) =>
+    item.roles.includes(user?.role),
+  ).map((item) =>
+    item.label === 'Notifikasi'
+      ? { ...item, badge: notificationCount }
+      : item,
+  )
 
   const handleLogout = useCallback(() => {
     logout()

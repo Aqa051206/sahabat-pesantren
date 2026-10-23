@@ -1,7 +1,4 @@
-import {
-  FilePlus2,
-  FileText,
-} from 'lucide-react'
+import { Bell, FilePlus2, FileText } from 'lucide-react'
 import { useCallback, useEffect, useRef } from 'react'
 import { Outlet, useNavigate } from 'react-router-dom'
 import DemoBanner from '../components/DemoBanner'
@@ -10,6 +7,7 @@ import AuthenticatedNavigation from './AuthenticatedNavigation'
 import { IdleWarning } from '../features/auth/IdleWarning'
 import { useAuth } from '../features/auth/auth-context'
 import { useIdleTimer } from '../features/auth/useIdleTimer'
+import { useNotificationSummary } from '../features/notifications/hooks'
 import { ROLES, ROLE_LABELS } from '../lib/constants'
 import { IDLE_TIMEOUT_SECONDS } from '../lib/env'
 
@@ -22,6 +20,18 @@ export function SantriLayout() {
   const { user, logout, quickExit } = useAuth()
   const navigate = useNavigate()
   const lastEscape = useRef(0)
+  const { data: notificationSummary } = useNotificationSummary()
+
+  const notificationCount = Number(notificationSummary?.total ?? 0)
+  const items = [
+    ...NAV_ITEMS,
+    {
+      to: '/santri/notifikasi',
+      label: 'Notifikasi',
+      icon: Bell,
+      badge: notificationCount,
+    },
+  ]
 
   const handleIdle = useCallback(() => {
     logout()
@@ -68,7 +78,7 @@ export function SantriLayout() {
       <DemoBanner />
       <div className="flex min-h-0 flex-1">
         <AuthenticatedNavigation
-          items={NAV_ITEMS}
+          items={items}
           homePath={NAV_ITEMS[0].to}
           label="Navigasi santri"
           darkSidebar

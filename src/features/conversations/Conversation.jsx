@@ -1,4 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useQueryClient } from '@tanstack/react-query'
 import { MessageCircle, Send } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import { useForm } from 'react-hook-form'
@@ -12,6 +13,7 @@ import { cn } from '../../lib/cn'
 import { formatDateOnly } from '../../lib/formatDate'
 import { useToast } from '../../components/ui/toast-context'
 import { useAuth } from '../auth/auth-context'
+import { notificationKeys } from '../notifications/queryKeys'
 import { useMessages, useSendMessage } from './hooks'
 
 const schema = z.object({
@@ -41,11 +43,19 @@ const sortMessagesOldestFirst = (messages) =>
 
 export function Conversation({ id, viewer }) {
   const { user } = useAuth()
+  const queryClient = useQueryClient()
   const { data, isLoading, isError, refetch } = useMessages(id)
   const messages = data ? sortMessagesOldestFirst(data) : []
   const sendMessage = useSendMessage(id)
   const toast = useToast()
   const listRef = useRef(null)
+  const markedReadRef = useRef(null)
+
+  useEffect(() => {
+    if (!data || markedReadRef.current === id) return
+    markedReadRef.current = id
+    queryClient.invalidateQueries({ queryKey: notificationKeys.summary() })
+  }, [data, id, queryClient])
 
   const {
     register,

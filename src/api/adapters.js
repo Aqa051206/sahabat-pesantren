@@ -124,6 +124,19 @@ export const adaptPagination = (meta, itemCount = 0) => {
   return { currentPage, lastPage, total, perPage }
 }
 
+export const adaptNotificationSummary = (raw) => ({
+  permintaanIdentitas: raw?.permintaan_identitas ?? 0,
+  pesanBaru: raw?.pesan_baru ?? 0,
+  statusDiubah: raw?.status_diubah ?? 0,
+  laporanBaru: raw?.laporan_baru ?? 0,
+  total:
+    raw?.pembaruan ??
+    (raw?.permintaan_identitas ?? 0) +
+      (raw?.pesan_baru ?? 0) +
+      (raw?.status_diubah ?? 0) +
+      (raw?.laporan_baru ?? 0),
+})
+
 export const adaptSummary = (raw) => ({
   totalSantri: raw?.total_santri ?? 0,
   totalLaporan: raw?.total_laporan ?? 0,

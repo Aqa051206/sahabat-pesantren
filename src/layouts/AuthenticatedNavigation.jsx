@@ -67,23 +67,41 @@ function AuthenticatedNavigation({
           Menu utama
         </p>
         <nav aria-label={label} className="mt-2 flex flex-col gap-1">
-          {items.map(({ to, label: itemLabel, icon: Icon, end, matchPrefix }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={end}
-              className={(state) =>
-                linkClass({
-                  isActive:
-                    state.isActive ||
-                      (matchPrefix && pathname.startsWith(matchPrefix)),
-                })
-              }
-            >
-              <Icon aria-hidden="true" className="size-5 shrink-0" />
-              {itemLabel}
-            </NavLink>
-          ))}
+          {items.map(
+            ({ to, label: itemLabel, icon: Icon, end, matchPrefix, badge = 0 }) => {
+              const badgeLabel = badge > 99 ? '99+' : String(badge)
+              return (
+                <NavLink
+                  key={to}
+                  to={to}
+                  end={end}
+                  className={(state) =>
+                    linkClass({
+                      isActive:
+                        state.isActive ||
+                        (matchPrefix && pathname.startsWith(matchPrefix)),
+                    })
+                  }
+                >
+                  <Icon aria-hidden="true" className="size-5 shrink-0" />
+                  <span className="min-w-0 flex-1 truncate">{itemLabel}</span>
+                  {badge > 0 ? (
+                    <span
+                      aria-hidden="true"
+                      className={cn(
+                        'min-w-6 shrink-0 rounded-full bg-[#ff7a59] px-1.5 py-0.5 text-center text-[10px] font-extrabold leading-4 text-white',
+                      )}
+                    >
+                      {badgeLabel}
+                    </span>
+                  ) : null}
+                  {badge > 0 ? (
+                    <span className="sr-only">{badge} pembaruan</span>
+                  ) : null}
+                </NavLink>
+              )
+            },
+          )}
         </nav>
         {darkSidebar ? (
           <div className="mt-auto flex flex-col gap-3">
@@ -122,37 +140,57 @@ function AuthenticatedNavigation({
               </button>
             </div>
           </div>
-        ) : sidebarNote ? (
-          <div className="mt-auto rounded-2xl border border-[#d3e2d8] bg-[#edf6f0] p-4">
-            <p className="text-sm font-extrabold text-[#163b2f]">{sidebarNote.title}</p>
-            <p className="mt-1 text-xs leading-5 text-[#718078]">{sidebarNote.description}</p>
+        ) : (
+          <div className="mt-auto flex flex-col gap-3">
+            {sidebarNote ? (
+              <div className="rounded-2xl border border-[#d3e2d8] bg-[#edf6f0] p-4">
+                <p className="text-sm font-extrabold text-[#163b2f]">{sidebarNote.title}</p>
+                <p className="mt-1 text-xs leading-5 text-[#718078]">{sidebarNote.description}</p>
+              </div>
+            ) : null}
           </div>
-        ) : null}
+        )}
       </aside>
 
       <nav
         aria-label={label}
         className="fixed inset-x-0 bottom-0 z-40 flex border-t border-[#d3e2d8] bg-[#edf6f0]/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
       >
-        {items.map(({ to, label: itemLabel, icon: Icon, end, matchPrefix }) => (
-          <NavLink
-            key={to}
-            to={to}
-            end={end}
-            className={({ isActive }) =>
-              cn(
-                'flex min-h-16 flex-1 flex-col items-center justify-center gap-1 px-1 py-2 text-[11px] font-bold transition-colors',
-                isActive ||
-                  (matchPrefix && pathname.startsWith(matchPrefix))
-                  ? 'text-[#0d352a]'
-                  : 'text-[#718078]',
-              )
-            }
-          >
-            <Icon aria-hidden="true" className="size-5" />
-            <span className="max-w-full truncate">{itemLabel}</span>
-          </NavLink>
-        ))}
+        {items.map(({ to, label: itemLabel, icon: Icon, end, matchPrefix, badge = 0 }) => {
+          const badgeLabel = badge > 99 ? '99+' : String(badge)
+          return (
+            <NavLink
+              key={to}
+              to={to}
+              end={end}
+              className={({ isActive }) =>
+                cn(
+                  'flex min-h-16 flex-1 flex-col items-center justify-center gap-1 px-1 py-2 text-[11px] font-bold transition-colors',
+                  isActive ||
+                    (matchPrefix && pathname.startsWith(matchPrefix))
+                    ? 'text-[#0d352a]'
+                    : 'text-[#718078]',
+                )
+              }
+            >
+              <span className="relative">
+                <Icon aria-hidden="true" className="size-5" />
+                {badge > 0 ? (
+                  <span
+                    aria-hidden="true"
+                    className="absolute -right-2.5 -top-2 flex min-w-4 items-center justify-center rounded-full bg-[#ff7a59] px-1 text-[9px] font-extrabold leading-4 text-white"
+                  >
+                    {badgeLabel}
+                  </span>
+                ) : null}
+              </span>
+              <span className="max-w-full truncate">{itemLabel}</span>
+              {badge > 0 ? (
+                <span className="sr-only">{badge} pembaruan</span>
+              ) : null}
+            </NavLink>
+          )
+        })}
       </nav>
     </>
   )

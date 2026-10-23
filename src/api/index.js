@@ -12,6 +12,7 @@ export const reports = active.reports
 export const messages = active.messages
 export const notes = active.notes
 export const dashboard = active.dashboard
+export const notifications = active.notifications
 export const admin = active.admin
 
 export default active

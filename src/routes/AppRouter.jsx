@@ -12,6 +12,7 @@ const HomePage = lazy(() => import('../pages/HomePage'))
 const LoginPage = lazy(() => import('../pages/LoginPage'))
 const ChangePasswordPage = lazy(() => import('../pages/ChangePasswordPage'))
 const ProfilePage = lazy(() => import('../pages/ProfilePage'))
+const NotifikasiPage = lazy(() => import('../pages/NotifikasiPage'))
 const CreateReportPage = lazy(() => import('../pages/santri/CreateReportPage'))
 const MyReportsPage = lazy(() => import('../pages/santri/MyReportsPage'))
 const SantriReportDetailPage = lazy(
@@ -69,6 +70,7 @@ export default function AppRouter() {
           <Route path="buat-laporan" element={<CreateReportPage />} />
           <Route path="laporan-saya" element={<MyReportsPage />} />
           <Route path="laporan/:id" element={<SantriReportDetailPage />} />
+          <Route path="notifikasi" element={<NotifikasiPage />} />
           <Route path="profil" element={<ProfilePage />} />
         </Route>
 
@@ -90,6 +92,7 @@ export default function AppRouter() {
             }
           />
           <Route path="laporan/:id" element={<StaffReportDetailPage />} />
+          <Route path="notifikasi" element={<NotifikasiPage />} />
           <Route path="profil" element={<ProfilePage />} />
         </Route>
 
@@ -104,6 +107,7 @@ export default function AppRouter() {
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="akun" element={<AccountsPage />} />
+          <Route path="notifikasi" element={<NotifikasiPage />} />
           <Route path="profil" element={<ProfilePage />} />
         </Route>
 

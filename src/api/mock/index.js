@@ -3,6 +3,7 @@ import {
   adaptAccount,
   adaptMessage,
   adaptNote,
+  adaptNotificationSummary,
   adaptPagination,
   adaptReport,
   adaptSummary,
@@ -71,6 +72,34 @@ const accessibleReport = (user, id) => {
     fail(403, 'Kamu tidak punya akses ke laporan ini.')
   }
   return report
+}
+
+// Snapshot baca hanya hidup di memori modul, sama seperti data mock lain.
+const readSnapshots = new Map()
+const readKey = (userId, reportId) => `${userId}:${reportId}`
+
+const markReportRead = (user, report) => {
+  if (!user || !report) return
+  readSnapshots.set(readKey(user.id, report.id), {
+    messageCount: report.messages.length,
+    status: report.status,
+    identityStatus: report.permintaanIdentitas?.status ?? null,
+    readAt: Date.now(),
+  })
+}
+
+const snapshotFor = (user, report) =>
+  readSnapshots.get(readKey(user.id, report.id))
+
+const hasNewMessages = (report, user, snapshot) => {
+  const start = snapshot?.messageCount ?? 0
+  return report.messages
+    .slice(start)
+    .some(
+      (message) =>
+        message.senderId != null &&
+        String(message.senderId) !== String(user.id),
+    )
 }
 
 const PROOF_TYPES = ['image/jpeg', 'image/png', 'application/pdf']
@@ -238,6 +267,7 @@ export const reports = {
       batasKlarifikasi: offsetDate(1),
       perluKlarifikasi: false,
       escalated: null,
+      statusChangedAt: null,
       createdAt: today,
       messages: [],
       notes: [],
@@ -291,7 +321,9 @@ export const reports = {
   async getDetail(id) {
     await delay()
     const user = requireUser()
-    return adaptReport(toRawReport(accessibleReport(user, id), user))
+    const report = accessibleReport(user, id)
+    markReportRead(user, report)
+    return adaptReport(toRawReport(report, user))
   },
 
   async updateIdentity(id, tampilkanIdentitas) {
@@ -313,6 +345,7 @@ export const reports = {
         request.answeredAt = offsetDate(0)
       }
     }
+    markReportRead(user, report)
     return adaptReport(toRawReport(report, user))
   },
 
@@ -375,6 +408,7 @@ export const reports = {
     request.status = identityStatus
     report.tampilkanIdentitas = identityStatus === 'disetujui'
     request.answeredAt = offsetDate(0)
+    markReportRead(user, report)
     return adaptReport(toRawReport(report, user))
   },
 
@@ -387,7 +421,9 @@ export const reports = {
       fail(422, 'Status tidak dikenal.', { status: ['Status tidak dikenal.'] })
     }
     report.status = status
+    report.statusChangedAt = new Date().toISOString()
     if (status !== 'baru') report.perluKlarifikasi = false
+    markReportRead(user, report)
     return adaptReport(toRawReport(report, user))
   },
 
@@ -400,6 +436,7 @@ export const reports = {
       fail(422, 'Pilih tujuan eskalasi.', { tujuan: ['Pilih tujuan eskalasi.'] })
     }
     report.escalated = { tujuan, catatan: catatan ?? null, at: offsetDate(0) }
+    markReportRead(user, report)
     return adaptReport(toRawReport(report, user))
   },
 }
@@ -409,6 +446,7 @@ export const messages = {
     await delay()
     const user = requireUser()
     const report = accessibleReport(user, id)
+    markReportRead(user, report)
     return report.messages.map(toRawMessage).map(adaptMessage)
   },
 
@@ -429,6 +467,7 @@ export const messages = {
       createdAt: offsetDate(0),
     }
     report.messages.push(item)
+    markReportRead(user, report)
     return adaptMessage(toRawMessage(item))
   },
 }
@@ -457,6 +496,66 @@ export const notes = {
       author_name: item.authorName,
       catatan: item.body,
       created_at: item.createdAt,
+    })
+  },
+}
+
+export const notifications = {
+  async getSummary() {
+    await delay()
+    const user = requireUser()
+
+    if (user.role === 'santri') {
+      const mine = reportStore.filter((item) => item.ownerId === user.id)
+      let permintaanIdentitas = 0
+      let pesanBaru = 0
+      let statusDiubah = 0
+
+      mine.forEach((report) => {
+        const snapshot = snapshotFor(user, report)
+        const request = report.permintaanIdentitas
+        if (
+          request?.status === 'menunggu' &&
+          snapshot?.identityStatus !== 'menunggu'
+        ) {
+          permintaanIdentitas += 1
+        }
+        if (hasNewMessages(report, user, snapshot)) pesanBaru += 1
+        if (
+          report.statusChangedAt &&
+          (!snapshot || Date.parse(report.statusChangedAt) > snapshot.readAt)
+        ) {
+          statusDiubah += 1
+        }
+      })
+
+      return adaptNotificationSummary({
+        permintaan_identitas: permintaanIdentitas,
+        pesan_baru: pesanBaru,
+        status_diubah: statusDiubah,
+        pembaruan: permintaanIdentitas + pesanBaru + statusDiubah,
+      })
+    }
+
+    const visible = reportStore.filter((item) => canView(user, item))
+    let laporanBaru = 0
+    let pesanBaru = 0
+
+    visible.forEach((report) => {
+      const snapshot = snapshotFor(user, report)
+      if (report.status === 'baru' && !snapshot) laporanBaru += 1
+      if (
+        report.status !== 'selesai' &&
+        hasNewMessages(report, user, snapshot)
+      ) {
+        pesanBaru += 1
+      }
+    })
+
+    return adaptNotificationSummary({
+      laporan_baru: laporanBaru,
+      pesan_baru: pesanBaru,
+      pembaruan: laporanBaru + pesanBaru,
     })
   },
 }

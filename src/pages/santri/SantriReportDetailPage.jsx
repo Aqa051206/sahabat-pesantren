@@ -1,4 +1,6 @@
+import { useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, FileQuestion } from 'lucide-react'
+import { useEffect } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import Card from '../../components/ui/Card'
 import EmptyState from '../../components/ui/EmptyState'
@@ -12,14 +14,28 @@ import {
   CategoryBadge,
   StatusBadge,
 } from '../../features/reports/components/badges'
+import { notificationKeys } from '../../features/notifications/queryKeys'
 import { useReport, useUpdateIdentity } from '../../features/reports/hooks'
 import { formatDateOnly } from '../../lib/formatDate'
 
 export default function SantriReportDetailPage() {
   const { id } = useParams()
-  const { data: report, isLoading, isError, error, refetch } = useReport(id)
+  const {
+    data: report,
+    dataUpdatedAt,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useReport(id)
   const updateIdentity = useUpdateIdentity(id)
+  const queryClient = useQueryClient()
   const toast = useToast()
+
+  useEffect(() => {
+    if (!dataUpdatedAt) return
+    queryClient.invalidateQueries({ queryKey: notificationKeys.summary() })
+  }, [dataUpdatedAt, queryClient])
 
   if (isLoading) {
     return (

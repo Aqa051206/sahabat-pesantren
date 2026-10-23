@@ -7,6 +7,7 @@ export const useMessages = (id) =>
     queryKey: reportKeys.conversation(id),
     queryFn: () => api.messages.getMessages(id),
     enabled: Boolean(id),
+    refetchOnMount: 'always',
     refetchInterval: 10000,
   })
 

@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query'
 import {
   ArrowLeft,
   FileQuestion,
@@ -5,7 +6,7 @@ import {
   Share2,
   StickyNote,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import Button from '../../components/ui/Button'
 import Card from '../../components/ui/Card'
@@ -19,6 +20,7 @@ import { useToast } from '../../components/ui/toast-context'
 import { Conversation } from '../../features/conversations/Conversation'
 import { useAuth } from '../../features/auth/auth-context'
 import IdentityRequestStaff from '../../features/identity/IdentityRequestStaff'
+import { notificationKeys } from '../../features/notifications/queryKeys'
 import {
   CategoryBadge,
   StatusBadge,
@@ -50,12 +52,25 @@ function InfoRow({ label, children }) {
 
 export default function StaffReportDetailPage() {
   const { id } = useParams()
-  const { data: report, isLoading, isError, error, refetch } = useReport(id)
+  const {
+    data: report,
+    dataUpdatedAt,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useReport(id)
   const updateStatus = useUpdateStatus(id)
   const escalate = useEscalate(id)
+  const queryClient = useQueryClient()
   const toast = useToast()
   const { user } = useAuth()
   const addNote = useAddNote(id, user?.name)
+
+  useEffect(() => {
+    if (!dataUpdatedAt) return
+    queryClient.invalidateQueries({ queryKey: notificationKeys.summary() })
+  }, [dataUpdatedAt, queryClient])
 
   const [escalateOpen, setEscalateOpen] = useState(false)
   const [tujuan, setTujuan] = useState('')

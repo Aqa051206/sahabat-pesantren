@@ -25,6 +25,59 @@ disebutkan tetap merupakan asumsi sampai dikonfirmasi tim backend.
 - ⚠️ Asumsi bentuk `user`: `{ id, name, role, must_change_password }`, dengan
   `role ∈ { santri, pengurus, pimpinan }`.
 
+## Notifikasi
+
+- Terverifikasi: `GET /api/v1/notifications/summary` dipakai untuk badge menu
+  Notifikasi dan halaman ringkasan notifikasi.
+- Respons `data` berupa objek. Contoh santri:
+
+  ```json
+  {
+    "message": "Berhasil mengambil notifikasi.",
+    "code": "NOTIFICATION_FETCH_SUCCESS",
+    "data": {
+      "permintaan_identitas": 1,
+      "pesan_baru": 0,
+      "status_diubah": 2,
+      "pembaruan": 3
+    }
+  }
+  ```
+
+  Contoh pengurus/pimpinan:
+
+  ```json
+  {
+    "data": {
+      "laporan_baru": 17,
+      "pesan_baru": 2,
+      "pembaruan": 19
+    }
+  }
+  ```
+
+- Santri memakai kategori `permintaan_identitas`, `pesan_baru`, dan
+  `status_diubah`. Pengurus dan pimpinan memakai `laporan_baru` dan
+  `pesan_baru`. Kategori yang tidak berlaku tidak dikirim; frontend
+  menganggapnya `0`.
+- `pembaruan` adalah jumlah semua kategori per laporan. Satu laporan dapat
+  dihitung pada lebih dari satu kategori.
+- Trigger santri: permintaan identitas berstatus `menunggu` yang lebih baru
+  dari waktu baca terakhir, pesan dari pengguna lain setelah waktu baca, dan
+  status laporan yang berubah setelah waktu baca.
+- Trigger pengurus/pimpinan: laporan berstatus `baru` yang belum pernah dibuka
+  oleh role tersebut, serta pesan dari pengguna lain pada laporan yang belum
+  `selesai` setelah waktu baca terakhir.
+- `GET /api/v1/reports/{id}` dan `GET /api/v1/reports/{id}/messages` otomatis
+  menandai laporan sudah dibaca untuk role yang sedang login. Frontend
+  menginvalidasi ringkasan notifikasi setelah laporan atau pesan dimuat.
+- `GET /api/v1/notifications` tidak dipakai; frontend hanya menampilkan
+  ringkasan kategori.
+- Frontend memantau ringkasan setiap 30 detik dan saat jendela kembali aktif.
+- Sudah diuji dengan akun asli: kategori laporan baru, pesan baru, status
+  berubah, dan permintaan identitas bertambah sesuai aksi dan kembali turun
+  setelah laporan/pesan dibaca.
+
 ## Laporan
 
 - ✅ `POST /api/v1/reports`
